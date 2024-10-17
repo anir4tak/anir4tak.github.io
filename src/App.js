@@ -14,9 +14,9 @@ const App = () => {
       <Header />
       <main>
         <section id="home"><Home /></section>
+        <section id="about"><About /></section>
         <section id="skills"><Skills /></section>
         <section id="experience"><Experience /></section>
-        <section id="about"><About /></section>
         <section id="contact"><Contact /></section>
       </main>
       <Footer />

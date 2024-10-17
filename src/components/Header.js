@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import '../styles/Header.scss';
-import logo from '../assets/images/logo_html.svg';
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);

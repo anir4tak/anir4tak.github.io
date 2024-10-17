@@ -14,7 +14,8 @@ import logoGITHUB from '../assets/images/logo_github.svg';
 import logoFIGMA from '../assets/images/logo_figma.svg';
 import logoPS from '../assets/images/logo_ps.svg';
 import logoXD from '../assets/images/logo_xd.svg';
-import logoBB from '../assets/images/logo_bitbucket.svg';
+import logoBN from '../assets/images/logo_bitbucket_new.svg';
+
 
 const Skills = () => {
   const [activeTab, setActiveTab] = useState('TechStack');
@@ -120,7 +121,7 @@ const Skills = () => {
             </div>
             <div className="skill-item">
               <div className="skill-bg">
-                <img src={logoBB} alt="Bitbucket" />
+                <img src={logoBN} alt="Bitbucket" />
                 <p>Bitbucket</p>
               </div>
             </div>

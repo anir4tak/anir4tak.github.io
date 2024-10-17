@@ -67,13 +67,53 @@
       p{
         color: #031a39;
       }
+
+      .study-name {
+        margin-top: 30px;
+
+        .exp-item {
+          z-index: 4;
+          /* position: relative; */
+          background: #fff;
+          border: 2px solid #56ddfe;
+          padding: 40px;
+          margin-bottom: 16px;
+          .exp-title {
+            font-size: 20px;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+          }
+          .exp-off,.exp-date {
+            font-size: 12px;
+          }
+          .exp-list ul {
+            list-style-type: none !important;
+            padding-left: 14px;
+
+            li{
+            
+              position: relative;
+              margin-bottom: 5px;
+              font-size: 11px;
+              padding-left: 15px;
+            
+              &::after {
+                content: '';
+                width: 5px;
+                height: 1px;
+                background: #000;
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                left: 0;
+              }
+            }
+          }
+        }
+      }  
     }
   }
 }
-
-
-  
-
 
   @keyframes fill {
     from { width: 0%; }
@@ -81,33 +121,44 @@
   }
   
   @media (max-width: 1024px) {
-    .about-container {
-      flex-direction: column;
-      align-items: center;
+    #about{
+      .about-container {
+        flex-direction: column;
+        align-items: center;
+        flex-wrap: nowrap;
+      }
     }
+
   }
   
   @media (max-width: 768px) {
-    .about-container {
-      flex-direction: column;
-      align-items: center;
+    #about{
+      .about-container {
+        flex-direction: column;
+        align-items: center;
+        flex-wrap: nowrap;
+  
+        .left-column, .right-column {
+          width: 100%;
+          margin: 0;
+
+          .profile-image {
+            max-width: 100%;
+            height: auto;
+            width: unset;
+          }
+        
+          .skills {
+            width: 100%;
+          }
+        
+          .progress-bar {
+            margin-bottom: 1rem;
+          }
+        }
+      }
     }
   
-    .left-column, .right-column {
-      width: 100%;
-      margin: 0;
-    }
-  
-    .profile-image {
-      max-width: 80%;
-    }
-  
-    .skills {
-      width: 100%;
-    }
-  
-    .progress-bar {
-      margin-bottom: 1rem;
-    }
+
   }
   

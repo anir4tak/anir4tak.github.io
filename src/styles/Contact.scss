@@ -1,67 +1,84 @@
 #contact{
   background-color: #031a39;
 
-.contact-container {
-  display: flex;
-  flex-wrap: wrap;
-  padding: 2rem 2rem 5rem;
-}
+  .contact-container {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 2rem 2rem 5rem;
+    
+    @media (max-width: 1024px){
+      flex-wrap: nowrap;
+    }
 
-.left-column, .right-column {
-  flex: 1;
-  min-width: 300px;
-  margin: 1rem;
-}
+    .left-column, .right-column {
+      flex: 1;
+      min-width: 300px;
+      margin: 1rem;
+    }
+    .left-column{
+      h2 {
+        font-size: 2rem;
+        color: #ffffff;
+        font-weight: 700;
+        span {
+          color: #56ddfe; /* Different color for span */
+        }
+      }
+      form {
+        display: flex;
+        flex-direction: column;
 
-h2 {
-  font-size: 2rem;
-  color: #ffffff;
-}
+        input, textarea {
+          margin-bottom: 1rem;
+          padding: 0.5rem;
+          border: 1px solid #ddd;
+          border-radius: 5px;
+          outline: none;
+          height: 50px;
+        }
+        button {
+          padding: 0.5rem 1rem;
+          border: none;
+          border-radius: 5px;
+          background-color: #56ddfe;
+          color: #fff;
+          cursor: pointer;
+          outline: none;
+          height: 50px;
+        }
+      }
+    }
 
-h2 span {
-  color: #56ddfe; /* Different color for span */
-}
-form {
-  display: flex;
-  flex-direction: column;
-}
+    .right-column {
+      h2 {
+        font-size: 2rem;
+        color: #ffffff;
+        font-weight: 700;
+        span {
+          color: #56ddfe;
+        }
+      }
 
-input, textarea {
-  margin-bottom: 1rem;
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-}
+      .contact-info div {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        .icon {
+          width: 20px;
+          height: 20px;
+          margin-right: 10px;
+        }
+        a, span {
+          color: #ffffff;
+          text-decoration: none;
 
-button {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 5px;
-  background-color: #56ddfe;
-  color: #fff;
-  cursor: pointer;
-}
-
-.contact-info div {
-  display: flex;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.icon {
-  width: 20px;
-  height: 20px;
-  margin-right: 10px;
-}
-
-.contact-info a, .contact-info span {
-  color: #ffffff;
-  text-decoration: none;
-}
-
-.contact-info a:hover {
-  text-decoration: underline;
-}
+          &:hover {
+            color: #56ddfe;
+          }
+        }   
+      }
+    }
+  }
 }
 
 @media (max-width: 1024px) {
