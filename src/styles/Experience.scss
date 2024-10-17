@@ -1,0 +1,45 @@
+.experience-container {
+    padding: 2rem;
+    text-align: center;
+    .demo-image {
+      width: 100%;
+      height: auto;
+    }
+    
+    .slick-slide {
+      padding: 1rem;
+      @media (max-width: 1024px) {
+        .slick-slide {
+          padding: 0.5rem;
+        }
+      }
+      @media (max-width: 768px) {
+        .slick-slide {
+          padding: 0.25rem;
+        }
+      }
+    }
+    .slick-prev, .slick-next {
+      z-index: 1;
+    }
+    p {
+      font-size: 1rem;
+      margin-top: 0.5rem;
+      color: #56ddfe;
+    }
+    h2{
+      font-weight: 700;
+      span{
+        color: #56ddfe;
+      }
+    }
+  }
+  
+
+  
+
+  
+
+  
+
+  
