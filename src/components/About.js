@@ -47,8 +47,8 @@ const About = () => {
       </div>
       <div className="right-column">
         <h2>About <span>Me</span></h2>
-        <p>Hi! I'm Topz from Iloilo City, Philippines. I'm full-time Front-End Developer. As a developer, I translate design into a functional and responsive website. I also ensure that it is optimized and creatively done. I'm always eager to learn and usually express it by keeping myself updated to the latest technologies. I do collaborate with other developers by joining communities and trainings so that I’ll be able to know how other developers write their codes and learn from them.</p>
-        <p>Work Life Balance is very important specially on developers because most of the day, we think a lot of ways to figure out how to build things and to fix bugs. Therefore, to refresh my mind and to relax, I either play video games or spend time with my family and friends.</p>
+        <p>Hi, I'm Topz, a Front-End Developer based in Iloilo City, Philippines. I love bringing designs to life by building responsive, user-friendly websites that are both visually appealing and technically sound. I'm committed to continuous learning, staying current with the latest web development trends. I also value collaboration, actively engaging with developer communities and trainings to learn from others and share my knowledge.</p>
+        <p>Work-life balance is crucial for developers, as we often spend long hours immersed in problem-solving and coding. To recharge and maintain a healthy mindset, I find solace in activities like playing video games or spending quality time with family and friends.</p>
         <div className="study-name">
           <div className="exp-item">
             <div className="exp-inner">
@@ -85,7 +85,7 @@ const About = () => {
             <div className="exp-inner">
               <div className="exp-title">Front End Developer</div>
                 <div className="exp-off">Sonnet Digital | Front End Web Developer | Manila, Philippines</div>
-                <div className="exp-date">June 2022 - Presents</div>
+                <div className="exp-date">June 2022 - Present</div>
                 <div className="exp-list">
                   <ul>
                     <li>Conversion of PSD web design to HTML (100+ Conversions)</li>
@@ -95,7 +95,7 @@ const About = () => {
                     <li>Using ACF custom field to be dynamic</li>
                     <li>Updating Plugin</li>
                     <li>Using Elementor Plugin</li>
-                    <li>SEO Maintenance</li>
+                    <li>SEO Implementation</li>
                     <li>Shadow to Senior developers work</li>
                   </ul>
                 </div>
