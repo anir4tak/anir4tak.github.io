@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/static/css/main.858fbaf0.css",
-    "main.js": "/static/js/main.81df0a5b.js",
+    "main.js": "/static/js/main.097990b2.js",
     "static/js/453.ed3810f9.chunk.js": "/static/js/453.ed3810f9.chunk.js",
     "static/media/Green Nature AU.png": "/static/media/Green Nature AU.e2e56308d5c2762bc84f.png",
     "static/media/Grossman.png": "/static/media/Grossman.728e461bb93ea0888345.png",
@@ -20,6 +20,7 @@
     "static/media/PIM-Podcast.png": "/static/media/PIM-Podcast.a7f588319a6de514c1c9.png",
     "static/media/Shunnarah.png": "/static/media/Shunnarah.0a25713aeff290bf926b.png",
     "static/media/profile.png": "/static/media/profile.ef9ba90974a2741dfde8.png",
+    "static/media/Mark-Christofher-Rodriguez.pdf": "/static/media/Mark-Christofher-Rodriguez.7b4fd99439da0ddec954.pdf",
     "static/media/logo_wp.svg": "/static/media/logo_wp.c8baddddb1e3733ae5f028f085c3790c.svg",
     "static/media/logo_figma.svg": "/static/media/logo_figma.748c3b91802af1ac32bcd673f9dbe9fa.svg",
     "static/media/logo_git.svg": "/static/media/logo_git.0a0fadde0acdd0825da7b40542958b11.svg",
@@ -41,11 +42,11 @@
     "static/media/logo_xd.svg": "/static/media/logo_xd.df5ae3e6fbde569544a8371a72a3508f.svg",
     "index.html": "/index.html",
     "main.858fbaf0.css.map": "/static/css/main.858fbaf0.css.map",
-    "main.81df0a5b.js.map": "/static/js/main.81df0a5b.js.map",
+    "main.097990b2.js.map": "/static/js/main.097990b2.js.map",
     "453.ed3810f9.chunk.js.map": "/static/js/453.ed3810f9.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.858fbaf0.css",
-    "static/js/main.81df0a5b.js"
+    "static/js/main.097990b2.js"
   ]
 }
