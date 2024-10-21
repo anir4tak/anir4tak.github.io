@@ -54,16 +54,16 @@ const Contact = () => {
             <span>Santa Barbara, Western Visayas, Philippines</span>
           </div>
           <div>
-            <a href="https://facebook.com/yourprofile" target="_blank" rel="noopener noreferrer">
+            <a href="https://www.facebook.com/christofhermark" target="_blank" rel="noopener noreferrer">
               <img src={facebookIcon} alt="Facebook" className="icon" />
             </a>
-            <a href="https://linkedin.com/in/yourprofile" target="_blank" rel="noopener noreferrer">
+            <a href="https://www.linkedin.com/in/mark-christofher/" target="_blank" rel="noopener noreferrer">
               <img src={linkedinIcon} alt="LinkedIn" className="icon" />
             </a>
             <a href="https://instagram.com/yourprofile" target="_blank" rel="noopener noreferrer">
               <img src={instagramIcon} alt="Instagram" className="icon" />
             </a>
-            <a href="https://github.com/yourprofile" target="_blank" rel="noopener noreferrer">
+            <a href="https://github.com/anir4tak" target="_blank" rel="noopener noreferrer">
               <img src={githubIcon} alt="GitHub" className="icon" />
             </a>
             <a href="https://discord.com/yourprofile" target="_blank" rel="noopener noreferrer">
