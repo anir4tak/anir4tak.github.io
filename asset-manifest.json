@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/static/css/main.718f0f27.css",
-    "main.js": "/static/js/main.097990b2.js",
+    "main.js": "/static/js/main.0a253a60.js",
     "static/js/453.ed3810f9.chunk.js": "/static/js/453.ed3810f9.chunk.js",
     "static/media/Green Nature AU.png": "/static/media/Green Nature AU.e2e56308d5c2762bc84f.png",
     "static/media/Grossman.png": "/static/media/Grossman.728e461bb93ea0888345.png",
@@ -21,20 +21,20 @@
     "static/media/Shunnarah.png": "/static/media/Shunnarah.0a25713aeff290bf926b.png",
     "static/media/profile.png": "/static/media/profile.ef9ba90974a2741dfde8.png",
     "static/media/Mark-Christofher-Rodriguez.pdf": "/static/media/Mark-Christofher-Rodriguez.7b4fd99439da0ddec954.pdf",
-    "static/media/logo_wp.svg": "/static/media/logo_wp.c8baddddb1e3733ae5f028f085c3790c.svg",
-    "static/media/logo_figma.svg": "/static/media/logo_figma.748c3b91802af1ac32bcd673f9dbe9fa.svg",
-    "static/media/logo_git.svg": "/static/media/logo_git.0a0fadde0acdd0825da7b40542958b11.svg",
-    "static/media/logo_bootstrap.svg": "/static/media/logo_bootstrap.4f457c5528fac2b47bc69a0a3b51d360.svg",
-    "static/media/logo_php.svg": "/static/media/logo_php.e8df0442d88ee5ac22c30ce2ced8295c.svg",
-    "static/media/logo_ps.svg": "/static/media/logo_ps.de60f64a064c5e0343e54498aa23bcd2.svg",
-    "static/media/logo_node.svg": "/static/media/logo_node.dab370895c6bc485db70ab34a5f95456.svg",
-    "static/media/logo_jquery.svg": "/static/media/logo_jquery.7ad031776a0c79d8ef04e58e3a564f4b.svg",
-    "static/media/logo_css.svg": "/static/media/logo_css.fe250041eb143a2e9f5be28b1b7c5fd1.svg",
-    "static/media/logo_html.svg": "/static/media/logo_html.19608c3a1b0af38350e66bf670d1a89f.svg",
-    "static/media/logo_sass.svg": "/static/media/logo_sass.0b54e93395915f86d5d61402dafc9fc1.svg",
-    "static/media/logo_js.svg": "/static/media/logo_js.74211cbfaa049c99de115b3e61c04256.svg",
-    "static/media/logo_github.svg": "/static/media/logo_github.ebd0949fc88d4a667bf148ce2a202b66.svg",
-    "static/media/logo_bitbucket_new.svg": "/static/media/logo_bitbucket_new.02aae9c08580975043f52baaebe9fe8d.svg",
+    "static/media/logo_wp.svg": "/static/media/logo_wp.1c7a2fe6c4e33b0c49b4fd952f338953.svg",
+    "static/media/logo_figma.svg": "/static/media/logo_figma.00bbf07c59d23155d38c797999f1b492.svg",
+    "static/media/logo_git.svg": "/static/media/logo_git.ea31397105dc5649361e3c8f6b11eaad.svg",
+    "static/media/logo_bootstrap.svg": "/static/media/logo_bootstrap.54cdb0b6f3136813446a3b57e7488d10.svg",
+    "static/media/logo_php.svg": "/static/media/logo_php.37ef7494fcd8d06ef1943774cc48cd9c.svg",
+    "static/media/logo_ps.svg": "/static/media/logo_ps.e52c479df7ac3fea65eb02af37cd935d.svg",
+    "static/media/logo_node.svg": "/static/media/logo_node.c851a3ea52b01df52ccec9d9dcd25a65.svg",
+    "static/media/logo_jquery.svg": "/static/media/logo_jquery.8182bda86daabf7b33ae85cd0cf463f3.svg",
+    "static/media/logo_css.svg": "/static/media/logo_css.f12a787baf8fe2f360f0d4d6dd20dfa3.svg",
+    "static/media/logo_html.svg": "/static/media/logo_html.d181fb4adbf595d5f11e4eb9cb93313d.svg",
+    "static/media/logo_sass.svg": "/static/media/logo_sass.42f363c067a23bf0c92ed9ebc5265490.svg",
+    "static/media/logo_js.svg": "/static/media/logo_js.488f77bdbcc9b056d4482a54aabe1f73.svg",
+    "static/media/logo_github.svg": "/static/media/logo_github.8f2327bfb52cc461e24fb55b7a8d7daf.svg",
+    "static/media/logo_bitbucket_new.svg": "/static/media/logo_bitbucket_new.4d546c1933385ac3b2d018836be6e670.svg",
     "static/media/slick.svg": "/static/media/slick.2630a3e3eab21c607e21.svg",
     "static/media/slick.eot": "/static/media/slick.a4e97f5a2a64f0ab1323.eot",
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
@@ -42,11 +42,11 @@
     "static/media/logo_xd.svg": "/static/media/logo_xd.df5ae3e6fbde569544a8371a72a3508f.svg",
     "index.html": "/index.html",
     "main.718f0f27.css.map": "/static/css/main.718f0f27.css.map",
-    "main.097990b2.js.map": "/static/js/main.097990b2.js.map",
+    "main.0a253a60.js.map": "/static/js/main.0a253a60.js.map",
     "453.ed3810f9.chunk.js.map": "/static/js/453.ed3810f9.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.718f0f27.css",
-    "static/js/main.097990b2.js"
+    "static/js/main.0a253a60.js"
   ]
 }
