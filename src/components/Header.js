@@ -26,7 +26,7 @@ const Header = () => {
             <li><a href="#experience">Experience</a></li>
             <li><a href="#about">About</a></li>
             <li><a href="#contact">Contact Me</a></li>
-            <li><a href={CV} download={CV} className="cv-download">Download my CV</a></li>
+            {/* <li><a href={CV} download={CV} className="cv-download">Download my CV</a></li> */}
           </ul>
         </div>
       </nav>

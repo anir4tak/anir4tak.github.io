@@ -66,7 +66,7 @@ const Contact = () => {
             <a href="https://github.com/anir4tak" target="_blank" rel="noopener noreferrer">
               <img src={githubIcon} alt="GitHub" className="icon" />
             </a>
-            <a href="https://discord.com/yourprofile" target="_blank" rel="noopener noreferrer">
+            <a href="https://discordapp.com/users/776705848835309579" target="_blank" rel="noopener noreferrer">
               <img src={discordIcon} alt="Discord" className="icon" />
             </a>
           </div>
