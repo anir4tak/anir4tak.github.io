@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import '../styles/Header.scss';
 import CV from '../assets/images/Mark-Christofher-Rodriguez.pdf';
+import logo from '../assets/images/Logo.png';
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,8 +13,8 @@ const Header = () => {
     <header>
       <nav>
         <div className="left-column">
-          <p>TOPZ</p>
-          {/* <img src={logo} alt="Logo" className="logo" /> */}
+          {/* <p>TOPZ</p> */}
+          <img src={logo} alt="Logo" className="logo" />
         </div>
         <div className="right-column">
           <div className="menu-icon mobile-icon" onClick={toggleMenu}>
