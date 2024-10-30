@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import '../styles/Header.scss';
 import CV from '../assets/images/Mark-Christofher-Rodriguez.pdf';
-import logo from '../assets/images/Logo.png';
+import logo from '../assets/images/logo-white.png';
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
