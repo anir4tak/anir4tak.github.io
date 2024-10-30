@@ -60,7 +60,7 @@ const Contact = () => {
             <a href="https://www.linkedin.com/in/mark-christofher/" target="_blank" rel="noopener noreferrer">
               <img src={linkedinIcon} alt="LinkedIn" className="icon" />
             </a>
-            <a href="https://instagram.com/yourprofile" target="_blank" rel="noopener noreferrer">
+            <a href="https://instagram.com/" target="_blank" rel="noopener noreferrer">
               <img src={instagramIcon} alt="Instagram" className="icon" />
             </a>
             <a href="https://github.com/anir4tak" target="_blank" rel="noopener noreferrer">
