@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/static/css/main.f84035d1.css",
-    "main.js": "/static/js/main.b3a39e0e.js",
+    "main.js": "/static/js/main.aeddfc63.js",
     "static/js/453.ed3810f9.chunk.js": "/static/js/453.ed3810f9.chunk.js",
     "static/media/Green Nature AU.png": "/static/media/Green Nature AU.e2e56308d5c2762bc84f.png",
     "static/media/Grossman.png": "/static/media/Grossman.728e461bb93ea0888345.png",
@@ -42,11 +42,11 @@
     "static/media/logo_xd.svg": "/static/media/logo_xd.df5ae3e6fbde569544a8371a72a3508f.svg",
     "index.html": "/index.html",
     "main.f84035d1.css.map": "/static/css/main.f84035d1.css.map",
-    "main.b3a39e0e.js.map": "/static/js/main.b3a39e0e.js.map",
+    "main.aeddfc63.js.map": "/static/js/main.aeddfc63.js.map",
     "453.ed3810f9.chunk.js.map": "/static/js/453.ed3810f9.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.f84035d1.css",
-    "static/js/main.b3a39e0e.js"
+    "static/js/main.aeddfc63.js"
   ]
 }
