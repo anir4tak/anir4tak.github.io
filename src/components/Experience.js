@@ -71,7 +71,7 @@ const Experience = () => {
 
   return (
     <div className="experience-container">
-      <h2>Elementor + <span>WordPress</span></h2>
+      <h2>WordPress + <span>Elementor</span></h2>
       <Slider {...settings}>
         {demoImagesElementor.map((image, index) => (
           <div key={index}>
