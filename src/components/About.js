@@ -67,7 +67,7 @@ const About = () => {
             <div className="exp-inner">
               <div className="exp-title">Front End Developer</div>
               <div className="exp-off">Pixel Builder | Front End Developer | Iloilo Philippines</div>
-              <div className="exp-date">August 2021 – May 2021</div>
+              <div className="exp-date">August 2021 – May 2022</div>
               <div className="exp-list">
                 <ul>
                   <li>Conversion of PSD web design to HTML (100+ Conversions)</li>
