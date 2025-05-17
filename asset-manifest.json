@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/static/css/main.f84035d1.css",
-    "main.js": "/static/js/main.eb3f7de4.js",
+    "main.js": "/static/js/main.b5c372c0.js",
     "static/js/453.ed3810f9.chunk.js": "/static/js/453.ed3810f9.chunk.js",
     "static/media/Green Nature AU.png": "/static/media/Green Nature AU.e2e56308d5c2762bc84f.png",
     "static/media/Grossman.png": "/static/media/Grossman.728e461bb93ea0888345.png",
@@ -13,6 +13,7 @@
     "static/media/Secure-Visa.png": "/static/media/Secure-Visa.ca9a6b3f25aa27d5f0b4.png",
     "static/media/Sabrish-Chand.png": "/static/media/Sabrish-Chand.7d5c67a6983ff446cf3e.png",
     "static/media/KJC-Law-Firm.png": "/static/media/KJC-Law-Firm.590bc666935b8fa703b6.png",
+    "static/media/Online Marketing Gurus.png": "/static/media/Online Marketing Gurus.55dd3cb818c04b9fcd61.png",
     "static/media/Chris-Dreyer.png": "/static/media/Chris-Dreyer.abc89a788e8b1fe1a2e2.png",
     "static/media/Hemmat.png": "/static/media/Hemmat.ec1b4870139a99b349d5.png",
     "static/media/Sandeep-Anand.png": "/static/media/Sandeep-Anand.621a0c499a831ebf1b86.png",
@@ -42,11 +43,11 @@
     "static/media/logo_xd.svg": "/static/media/logo_xd.df5ae3e6fbde569544a8371a72a3508f.svg",
     "index.html": "/index.html",
     "main.f84035d1.css.map": "/static/css/main.f84035d1.css.map",
-    "main.eb3f7de4.js.map": "/static/js/main.eb3f7de4.js.map",
+    "main.b5c372c0.js.map": "/static/js/main.b5c372c0.js.map",
     "453.ed3810f9.chunk.js.map": "/static/js/453.ed3810f9.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.f84035d1.css",
-    "static/js/main.eb3f7de4.js"
+    "static/js/main.b5c372c0.js"
   ]
 }
