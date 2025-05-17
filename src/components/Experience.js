@@ -19,6 +19,7 @@ import Grossman from '../assets/images/acf/Grossman.png';
 import Dehoyos from '../assets/images/acf/Dehoyos.png';
 import GreenAU from '../assets/images/acf/Green Nature AU.png';
 import GreenNZ from '../assets/images/acf/Green Nature NZ.png';
+import OMGAU from '../assets/images/acf/Online Marketing Gurus.png';
 
 const Experience = () => {
   const settings = {
@@ -67,6 +68,7 @@ const Experience = () => {
     { src: Dehoyos, url: "https://www.dehoyosinjury.com/", text: "Dehoyos Accident Attorneys" },
     { src: GreenAU, url: "https://greenbynature.com.au/", text: "Green by Nature AU" },
     { src: GreenNZ, url: "https://greenbynature.co.nz/", text: "Green by Nature NZ" },
+    { src: OMGAU, url: "https://www.onlinemarketinggurus.com.au/", text: "Online Marketing Gurus" },
   ];
 
   return (

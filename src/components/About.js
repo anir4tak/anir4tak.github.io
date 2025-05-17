@@ -85,7 +85,7 @@ const About = () => {
             <div className="exp-inner">
               <div className="exp-title">Front End Developer</div>
                 <div className="exp-off">Sonnet Digital | Front End Web Developer | Manila, Philippines</div>
-                <div className="exp-date">June 2022 - Present</div>
+                <div className="exp-date">June 2022 - October 2024</div>
                 <div className="exp-list">
                   <ul>
                     <li>Conversion of PSD web design to HTML (100+ Conversions)</li>
@@ -101,12 +101,21 @@ const About = () => {
                 </div>
             </div>
             <div className="exp-inner">
-              <div className="exp-title"></div>
-              <div className="exp-off"></div>
-              <div className="exp-date"></div>
+              <div className="exp-title">Web Developer</div>
+              <div className="exp-off">Online Marketing Gurus | Web Developer</div>
+              <div className="exp-date">November 2024 - May 2025 </div>
               <div className="exp-list">
                 <ul>
-
+                  <li>Rebuilt the Online Marketing Gurus website</li>
+                  <li>Implemented SEO best practices</li>
+                  <li>Used ACF custom fields and ReactJS to create dynamic content</li>
+                  <li>Ensured website compatibility across major browsers</li>
+                  <li>Added canonical, prev, and next tags to all taxonomy pages</li>
+                  <li>Implemented various dynamic schema types</li>
+                  <li>Updated plugins</li>
+                  <li>Worked with Pantheon, Ubuntu, and Lando environments</li>
+                  <li>Migrated hosting from Pantheon to SiteGround</li>
+                  <li>Created a custom theme using HTML, CSS, and JavaScript</li>
                 </ul>
               </div>
             </div>
