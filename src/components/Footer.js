@@ -4,7 +4,7 @@ import '../styles/Footer.scss';
 const Footer = () => {
   return (
     <footer>
-      <p>Copyright © Topz 2024.</p>
+      <p>Copyright © MARK 2025.</p>
     </footer>
   );
 }

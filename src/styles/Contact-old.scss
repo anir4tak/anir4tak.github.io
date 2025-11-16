@@ -1,0 +1,109 @@
+#contact{
+  // background-color: #031a39;
+
+  .contact-container {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 2rem 2rem 5rem;
+    max-width: 1440px;
+    width: 100%;
+    margin: 0 auto;
+    
+    @media (max-width: 1024px){
+      flex-wrap: nowrap;
+    }
+
+    .left-column, .right-column {
+      flex: 1;
+      min-width: 300px;
+      margin: 1rem;
+    }
+    .left-column{
+      h2 {
+        font-size: 2rem;
+        color: #ffffff;
+        font-weight: 700;
+        span {
+          color: #56ddfe; /* Different color for span */
+        }
+      }
+      form {
+        display: flex;
+        flex-direction: column;
+
+        input, textarea {
+          margin-bottom: 1rem;
+          padding: 0.5rem;
+          border: 1px solid #ddd;
+          border-radius: 5px;
+          outline: none;
+          height: 50px;
+        }
+        button {
+          padding: 0.5rem 1rem;
+          border: none;
+          border-radius: 5px;
+          background-color: #56ddfe;
+          color: #fff;
+          cursor: pointer;
+          outline: none;
+          height: 50px;
+        }
+      }
+    }
+
+    .right-column {
+      h2 {
+        font-size: 2rem;
+        color: #ffffff;
+        font-weight: 700;
+        span {
+          color: #56ddfe;
+        }
+      }
+
+      .contact-info div {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        .icon {
+          width: 20px;
+          height: 20px;
+          margin-right: 10px;
+        }
+        a, span {
+          color: #ffffff;
+          text-decoration: none;
+
+          &:hover {
+            color: #56ddfe;
+          }
+        }   
+      }
+    }
+  }
+}
+
+@media (max-width: 1024px) {
+  .contact-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .left-column, .right-column {
+    width: 100%;
+    margin: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .contact-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .left-column, .right-column {
+    width: 100%;
+    margin: 0;
+  }
+}

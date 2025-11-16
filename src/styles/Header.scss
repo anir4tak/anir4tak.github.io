@@ -1,16 +1,19 @@
 header {
-  background: #031a39;
+  background: #2bbecb;
   color: #fff;
-  padding: 0 5rem; 
+  padding: 2rem 5rem; 
 
   nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    max-width: 1440px;
+    width: 100%;
+    margin: 0 auto;
 
     .left-column {
       flex: 0 0 40%; 
-      max-width: 300px; 
+      max-width: 300px;
 
       p {
         font-weight: 700;
@@ -20,7 +23,15 @@ header {
 
       .logo {
         width: 100%;
-        max-width: 90px; 
+        // max-width: 90px;
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 10px;
+        
+        svg{
+          max-width: 50px;
+        }
       }
     }
 
@@ -28,7 +39,7 @@ header {
       flex: 1;
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-end;
 
       .menu-icon {
         cursor: pointer;
@@ -40,6 +51,7 @@ header {
       .nav-links {
         display: flex;
         list-style-type: none;
+        gap: 40px;
 
         a {
           color: #fff;
@@ -47,7 +59,7 @@ header {
           padding: 0.5rem;
           
           &:hover{
-            color:#56ddfe;
+            color:#031a39;
           }
         }
 
@@ -56,7 +68,7 @@ header {
           border-radius: 20px;
           padding: 0.5rem 1rem;
           &:hover{
-            background-color: #56ddfe;
+            background-color: #2bbecb;
             color: #ffffff;
           }
         }

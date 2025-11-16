@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import '../styles/Header.scss';
 import CV from '../assets/images/Mark-Christofher-Rodriguez.pdf';
-import logo from '../assets/images/logo-white.png';
+// import logo from '../assets/images/logo-white.png';
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -14,7 +14,15 @@ const Header = () => {
       <nav>
         <div className="left-column">
           {/* <p>TOPZ</p> */}
-          <img src={logo} alt="Logo" className="logo" />
+          {/* <img src={logo} alt="Logo" className="logo" /> */}
+          <div class="logo">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="50" cy="50" r="48" fill="white"/>
+              <text x="50%" y="55%" text-anchor="middle" font-size="50" fill="#2bbecb" font-family="Arial" dy=".3em">M</text>
+            </svg>
+            <p>MARK</p>
+          </div>
+
         </div>
         <div className="right-column">
           <div className="menu-icon mobile-icon" onClick={toggleMenu}>
