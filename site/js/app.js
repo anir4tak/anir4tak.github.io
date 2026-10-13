@@ -29,7 +29,26 @@ function fit() {
   if (pan && (!wasPan || !fit.done)) viewport.scrollLeft = 170 * scale - viewport.clientWidth / 2; // start on Mark
   fit.done = true;
 }
-addEventListener('resize', fit);
+addEventListener('resize', () => { fit(); checkRotate(); });
+
+// ---------- phones held upright: ask for landscape, with a way out ----------
+const rotate = document.getElementById('rotate');
+const portraitPhone = matchMedia('(orientation: portrait) and (pointer: coarse) and (max-width: 820px)');
+let skipRotate = false;
+try { skipRotate = sessionStorage.getItem('skip-rotate') === '1'; } catch { /* storage blocked: just ask again next visit */ }
+function checkRotate() {
+  const show = portraitPhone.matches && !skipRotate;
+  if (show === !rotate.hidden) return;
+  rotate.hidden = !show;
+  if (show) document.getElementById('rotate-skip').focus();
+}
+portraitPhone.addEventListener?.('change', () => { checkRotate(); fit(); });
+document.getElementById('rotate-skip').addEventListener('click', () => {
+  skipRotate = true;
+  try { sessionStorage.setItem('skip-rotate', '1'); } catch { /* fine */ }
+  checkRotate();
+  fit();
+});
 
 // ---------- scene ----------
 let bubbleTimer;
@@ -200,4 +219,5 @@ setInterval(tick, 30_000);
 setInterval(() => { si++; tick(); }, 9_000);
 
 fit();
+checkRotate();
 if (location.hash === '#party') scene.setMusic(true); // easter egg: the room dances without music
