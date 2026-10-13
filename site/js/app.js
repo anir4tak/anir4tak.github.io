@@ -211,7 +211,7 @@ function tick() {
   const t = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', timeZone: PROFILE.timezone }).format(new Date());
   const h = +new Intl.DateTimeFormat('en-US', { hour: 'numeric', hourCycle: 'h23', timeZone: PROFILE.timezone }).format(new Date());
   const line = musicOn ? `♪ Jukebox is playing “${SPOTIFY.playlists[current].name}”`
-    : h >= 2 && h < 8 ? 'Mark is probably asleep (the dog is not)' : STATUS[si % STATUS.length];
+    : h >= 2 && h < 8 ? 'Topz is probably asleep (the dog is not)' : STATUS[si % STATUS.length];
   status.textContent = `${line} · ${t} in Iloilo`;
 }
 tick();

@@ -89,6 +89,10 @@ const GLYPHS = {
   A: ['01110', '10001', '10001', '11111', '10001', '10001', '10001'],
   R: ['11110', '10001', '10001', '11110', '10100', '10010', '10001'],
   K: ['10001', '10010', '10100', '11000', '10100', '10010', '10001'],
+  T: ['11111', '00100', '00100', '00100', '00100', '00100', '00100'],
+  O: ['01110', '10001', '10001', '10001', '10001', '10001', '01110'],
+  P: ['11110', '10001', '10001', '11110', '10000', '10000', '10000'],
+  Z: ['11111', '00001', '00010', '00100', '01000', '10000', '11111'],
 };
 
 // stable pseudo-random stars
@@ -142,7 +146,7 @@ export function createScene(canvas, hooks = {}) {
     { id: 'jukebox', label: 'Jukebox · my Spotify playlists', x: 241, y: 108, w: 28, h: 42 },
     { id: 'katana', label: 'Katana rack', x: 193, y: 7, w: 66, h: 30 },
     { id: 'contact', label: 'Contact · the phone', x: 24, y: 100, w: 30, h: 18 },
-    { id: 'mark', label: 'Mark', x: 146, y: 62, w: 48, h: 86 },
+    { id: 'mark', label: 'Topz', x: 146, y: 62, w: 48, h: 86 },
     { id: 'monitors', label: 'Projects · on screen', x: 126, y: 72, w: 88, h: 38 },
     { id: 'pc', label: 'PC · change the RGB', x: 216, y: 70, w: 24, h: 42 },
     { id: 'bottle', label: 'Water bottle · take a sip', x: 194, y: 96, w: 8, h: 15 },
@@ -255,7 +259,7 @@ export function createScene(canvas, hooks = {}) {
 
   function drawNeon(d) {
     const off = !reduced && s.t < s.neonOffUntil;
-    const letters = 'MARK';
+    const letters = 'TOPZ';
     const x0 = 136, y0 = 12;
     const lit = off ? '#1f5d63' : C.tealLight;
     if (!off) {

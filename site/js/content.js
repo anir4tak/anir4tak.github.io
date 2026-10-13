@@ -61,9 +61,9 @@ export const CONTACT = [
 
 // what the status strip at the bottom cycles through
 export const STATUS = [
-  'Mark is building something in WordPress',
-  'Mark is pushing pixels around in Figma',
-  'Mark is chasing a CSS bug',
+  'Topz is building something in WordPress',
+  'Topz is pushing pixels around in Figma',
+  'Topz is chasing a CSS bug',
   'Mochi is supervising',
 ];
 

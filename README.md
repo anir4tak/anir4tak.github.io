@@ -1,4 +1,4 @@
-# Mark's room
+# Topz's room
 
 **[anir4tak.github.io](https://anir4tak.github.io)** — a pixel-art portfolio. No scroll, no nav bar: just a room. Click things.
 
@@ -10,9 +10,9 @@
 | Bookshelf | Skills |
 | Teal phone | Contact (it rings now and then) |
 | Window | Opens and closes the blind. The sky follows *your* local time. |
-| Mark | Says something |
+| Topz | Says something |
 | Mochi | Wakes up, or says hi |
-| Jukebox | Plays my Spotify playlists. While music plays, the jukebox lights up and Mark nods along. |
+| Jukebox | Plays my Spotify playlists. While music plays, the jukebox lights up and Topz nods along. |
 | Katana rack | Three display swords (original designs) |
 | Mug | This MEETING should have been an EMAIL |
 
