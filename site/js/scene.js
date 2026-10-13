@@ -151,7 +151,8 @@ export function createScene(canvas, hooks = {}) {
     ac: true,
     bulb: false, bulbGlow: 0,
     squeeze: { at: -10, count: 0 }, // the stress-ball alien
-    hold: { start: -10, until: 0, next: rand(30, 50) }, // Topz picks it up and squeezes it
+    hold: { start: -10, until: 0, next: rand(30, 50), item: 'alien' }, // Topz picks up the alien or the mug
+    coffees: 0,
     chest: { open: 0, target: 0, item: null, itemAt: 0, closeAt: 0, last: -1, sparks: [] },
     roach: { x: 200, y: 170, tx: 200, ty: 170, state: 'wait', until: rand(3, 8), dir: 1, flee: false },
     mouse: { state: 'home', x: 82, dir: 1, until: rand(10, 20), tx: 82 },
@@ -177,7 +178,7 @@ export function createScene(canvas, hooks = {}) {
     { id: 'monitors', label: 'Projects · on screen', x: 86, y: 64, w: 128, h: 46 },
     { id: 'pc', label: 'PC · change the RGB', x: 218, y: 70, w: 24, h: 42 },
     { id: 'bottle', label: 'Water bottle · take a sip', x: 175, y: 96, w: 8, h: 15 },
-    { id: 'mug', label: 'Mug · "This MEETING should have been an EMAIL"', x: 62, y: 98, w: 13, h: 13 },
+    { id: 'mug', label: 'Coffee mug · take a sip', x: 62, y: 98, w: 13, h: 13 },
     { id: 'alien', label: 'Stress ball alien · squeeze it', x: 75, y: 96, w: 13, h: 15 },
     { id: 'dog', label: 'Mochi', x: 0, y: 0, w: 18, h: 14 },
     { id: 'aircon', label: 'Aircon · on/off', x: 132, y: 2, w: 60, h: 18 },
@@ -511,11 +512,12 @@ export function createScene(canvas, hooks = {}) {
   const ALIEN_CX = 81, ALIEN_FLOOR = 110;
   const HOLD_DUR = 3.6;
   const holding = () => s.t < s.hold.until;
+  const holdingThe = (item) => holding() && s.hold.item === item;
   const ease = (k) => k * k * (3 - 2 * k);
   // where the alien is right now: on the desk, travelling, or in Topz's left hand
   function alienPos() {
     const desk = { cx: ALIEN_CX, floor: ALIEN_FLOOR };
-    if (!holding()) return { ...desk, held: false };
+    if (!holdingThe('alien')) return { ...desk, held: false };
     const u = (s.t - s.hold.start) / HOLD_DUR;
     const hand = { cx: 112 + Math.round(s.chair.x), floor: 96 };
     const k = u < 0.18 ? ease(u / 0.18) : u > 0.84 ? 1 - ease((u - 0.84) / 0.16) : 1;
@@ -527,7 +529,7 @@ export function createScene(canvas, hooks = {}) {
     };
   }
   function squish() {
-    if (holding()) {
+    if (holdingThe('alien')) {
       // three squeezes while it's in his hand, each with a little wobble after
       const u = (s.t - s.hold.start) / HOLD_DUR;
       if (u < 0.22 || u > 0.8) return { press: 0, wob: 0.3 };
@@ -583,12 +585,17 @@ export function createScene(canvas, hooks = {}) {
   }
   // Topz's left arm, reaching from his shoulder to wherever the alien is
   function drawHoldArm(sx, sy) {
-    const pos = alienPos(), { press } = squish();
-    const hx = pos.cx, hy = pos.floor + 1;
+    const mug = s.hold.item === 'mug';
+    const pos = mug ? mugPos() : alienPos(), { press } = mug ? { press: 0 } : squish();
+    const hx = mug ? pos.x + 9 : pos.cx, hy = mug ? pos.y + 6 : pos.floor + 1;
     const n = Math.max(Math.abs(hx - sx), Math.abs(hy - sy), 1);
     for (let i = 0; i <= n; i++) {
       const x = sx + (hx - sx) * i / n, y = sy + (hy - sy) * i / n;
       R(x - 3, y - 2, 6, 5, C.hoodie); R(x - 3, y + 2, 6, 1, C.hoodieDark);
+    }
+    if (mug) { // fingers through the handle
+      R(hx - 1, hy - 4, 4, 5, C.skin); R(hx - 1, hy, 4, 1, C.skinShade);
+      return;
     }
     // hand cupping the alien, fingers closing in as he squeezes
     const f = Math.round(press * 2);
@@ -625,14 +632,78 @@ export function createScene(canvas, hooks = {}) {
     alienReply = setTimeout(() => hooks.say?.(SQUEEZE_ALIEN[Math.floor(Math.random() * SQUEEZE_ALIEN.length)], x(), y), 1500);
   }
   // Topz picks the alien up and squeezes it (if his hands are free)
-  function startHold() {
+  function startHold(item = 'alien') {
     if (holding()) return false;
     if (s.t < s.drinkUntil || s.t < s.stretchUntil) return false;
+    s.hold.item = item;
     s.hold.start = s.t;
     s.hold.until = s.t + HOLD_DUR;
     s.hold.next = s.t + rand(45, 80);
-    squeezeLines(() => alienPos().cx + 8, 76);
+    if (item === 'mug') coffeeLines();
+    else squeezeLines(() => alienPos().cx + 8, 76);
     return true;
+  }
+
+  // ---------- coffee: the mug comes up to his mouth ----------
+  const MUG = { x: 64, y: 102 };
+  function mugPos() {
+    if (!holdingThe('mug')) return { ...MUG, held: false, tip: 0 };
+    const u = (s.t - s.hold.start) / HOLD_DUR;
+    const hand = { x: 122 + Math.round(s.chair.x), y: 78 };
+    const k = u < 0.2 ? ease(u / 0.2) : u > 0.82 ? 1 - ease((u - 0.82) / 0.18) : 1;
+    const arc = Math.sin(k * Math.PI) * 4;
+    // two long sips: the mug tips towards his mouth
+    const v = (u - 0.24) / 0.54;
+    const tip = v > 0 && v < 1 ? Math.max(0, Math.sin(v * Math.PI * 2)) : 0;
+    return {
+      x: Math.round(MUG.x + (hand.x - MUG.x) * k),
+      y: Math.round(MUG.y + (hand.y - MUG.y) * k - arc),
+      held: true, tip, u,
+    };
+  }
+  const sipping = () => holdingThe('mug') && mugPos().tip > 0.3;
+  function drawMug(inHand = false) {
+    const pos = mugPos();
+    if (pos.held !== inHand) return;
+    const { x, y } = pos, lean = Math.round(pos.tip * 2);
+    // row by row, so the top can lean towards his mouth
+    for (let j = 0; j < 8; j++) {
+      const o = Math.round(lean * (7 - j) / 7);
+      R(x + o, y + j, 8, 1, C.white);
+      if (j === 2 || j === 6) R(x + 1 + o, y + j, 6, 1, '#2b3245');
+      if (j === 4) R(x + 1 + o, y + j, 4, 1, C.teal);
+    }
+    R(x + 8, y + 2, 2, 4, C.white); // handle
+    if (!reduced && pos.tip < 0.3) for (let i = 0; i < 3; i++) { // steam
+      const k = (s.t * 6 + i * 3) % 9;
+      R(x + 2 + (Math.floor(k) % 2) + i, y - 2 - k, 1, 1, '#ffffff55');
+    }
+    Object.assign(box('mug'), { x: x - 2, y: y - 4, w: 13, h: 13 });
+  }
+  const COFFEE_LINES = [
+    'Coffee first. Code second.',
+    'This MEETING should have been an EMAIL. *sip*',
+    'Fuel for the next bug fix. ☕',
+    'Kape muna. Then deploy.',
+    'Is it still warm? …close enough.',
+    'Brewing ideas. And coffee.',
+  ];
+  const SIP_LINES = ['*sip*… ahh.', '*slurp*', 'Mmm. Now I can see the bug.', 'That hit the spot.', '*sip sip*'];
+  let coffeeIdx = 0, sipReply;
+  function coffeeLines() {
+    s.coffees++;
+    const nth = s.coffees === 3 ? 'Coffee #3 today. Don\'t tell anyone.'
+      : s.coffees === 5 ? 'Coffee #5. I can hear colours now.'
+      : s.coffees === 10 ? 'Coffee #10. I am the bug now. ☕☕☕' : null;
+    clearTimeout(sipReply);
+    const sx = () => mugPos().x + 12;
+    hooks.say?.(nth || COFFEE_LINES[coffeeIdx++ % COFFEE_LINES.length], sx(), 74);
+    sipReply = setTimeout(() => hooks.say?.(SIP_LINES[Math.floor(Math.random() * SIP_LINES.length)], sx(), 74), 1500);
+  }
+  function drinkCoffee() {
+    if (holdingThe('mug')) return;
+    if (startHold('mug')) return;
+    hooks.say?.('Hold on, hands full. Coffee in a sec.', 70, 96);
   }
   function squeezeAlien() {
     if (holding()) { // already in his hand: one extra squeak
@@ -663,13 +734,7 @@ export function createScene(canvas, hooks = {}) {
     R(46, 107, 12, 3, '#3a3f58'); R(51, 86, 2, 21, '#3a3f58');
     R(51, 84, 10, 2, '#3a3f58'); R(58, 80, 12, 5, C.teal); R(59, 85, 10, 1, '#fff6c8');
     drawAlien();
-    // mug with steam
-    R(64, 102, 8, 8, C.white); R(72, 104, 2, 4, C.white);
-    R(65, 104, 6, 1, '#2b3245'); R(65, 106, 4, 1, C.teal); R(65, 108, 6, 1, '#2b3245');
-    if (!reduced) for (let i = 0; i < 3; i++) {
-      const k = (s.t * 6 + i * 3) % 9;
-      R(66 + (Math.floor(k) % 2) + i, 100 - k, 1, 1, '#ffffff55');
-    }
+    drawMug();
   }
 
   // Mark, seen from behind, in his chair
@@ -741,7 +806,7 @@ export function createScene(canvas, hooks = {}) {
     // hood bunched at the neck
     R(161, 80, 18, 7, C.hood); R(163, 79, 14, 2, C.hoodieDark); R(164, 86, 12, 2, C.hood);
     const nod = s.music && !drinking && Math.floor(s.t * 4) % 2 ? 1 : 0;
-    const tilt = drinking ? -1 : 0; // head tips back to drink
+    const tilt = drinking || sipping() ? -1 : 0; // head tips back to drink
     // a soft outline so the dark hair reads against the dark monitor behind it
     const hx = 162 + look, hy = 64 + nod + tilt;
     const rim = { h: '#2c3552', H: '#2c3552', s: '#2c3552', S: '#2c3552' };
@@ -759,7 +824,7 @@ export function createScene(canvas, hooks = {}) {
     drawHat();
     ctx.restore();
     ctx.restore();
-    if (holding()) { drawHoldArm(119 + roll + sw, 109); drawAlien(true); }
+    if (holding()) { drawHoldArm(119 + roll + sw, 109); drawAlien(true); drawMug(true); }
     Object.assign(box('mark'), { x: 116 + roll, y: 78 });
     Object.assign(box('hat'), { x: 127 + roll, y: 118 });
   }
@@ -1349,7 +1414,7 @@ export function createScene(canvas, hooks = {}) {
     if (s.t > s.nextBlink) { s.blinkUntil = s.t + 0.14; s.nextBlink = s.t + rand(2.5, 5.5); }
     if (s.t > s.nextStretch && s.t > s.drinkUntil && !holding()) { s.stretchUntil = s.t + 1.8; s.nextStretch = s.t + rand(25, 45); }
     if (s.t > s.nextDrink && s.t > s.stretchUntil) startDrink();
-    if (s.t > s.hold.next && !reduced) { if (!startHold()) s.hold.next = s.t + 5; } // he grabs it on his own sometimes
+    if (s.t > s.hold.next && !reduced) { if (!startHold(Math.random() < 0.5 ? 'mug' : 'alien')) s.hold.next = s.t + 5; } // he grabs it on his own sometimes
     if (s.t > s.nextRing) { s.ringUntil = s.t + 3; s.nextRing = s.t + rand(50, 90); }
     if (s.t > s.nextFlicker) { s.neonOffUntil = s.t + rand(0.08, 0.3); s.nextFlicker = s.t + rand(5, 16); }
 
@@ -1476,7 +1541,7 @@ export function createScene(canvas, hooks = {}) {
     if (o.id === 'katana') { hooks.say?.(KATANA_LINES[katanaIdx++ % KATANA_LINES.length], 162, 40); return; }
     if (o.id === 'bottle') { startDrink(); return; }
     if (o.id === 'alien') { squeezeAlien(); return; }
-    if (o.id === 'mug') { hooks.say?.('This MEETING should have been an EMAIL', 68, 96); return; }
+    if (o.id === 'mug') { drinkCoffee(); return; }
     if (o.id === 'pc') { s.rgbMode = (s.rgbMode + 1) % (RGB.length + 1); return; }
     hooks.open?.(o.id === 'monitors' ? 'projects' : o.id);
   }
