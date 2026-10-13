@@ -1,4 +1,4 @@
-import { createScene, W, H } from './scene.js';
+import { createScene, drawPortrait, W, H } from './scene.js';
 import { PROFILE, ABOUT, PROJECTS, CONTACT, STATUS, SPOTIFY, NOW_PLAYING_URL, WEATHER_AT } from './content.js';
 
 const stage = document.getElementById('stage');
@@ -54,6 +54,7 @@ document.getElementById('rotate-skip').addEventListener('click', () => {
 let bubbleTimer;
 const scene = createScene(canvas, {
   open: openPanel,
+  talk: showTalk,
   photo(item) { showPhoto(item); },
   say(text, x, y) {
     bubble.textContent = text;
@@ -65,6 +66,38 @@ const scene = createScene(canvas, {
     bubbleTimer = setTimeout(() => (bubble.hidden = true), 3200);
   },
 });
+
+// ---------- character card: Kokak, Keso… ----------
+const talk = document.getElementById('talk');
+const talkFace = document.getElementById('talk-face');
+const talkName = document.getElementById('talk-name');
+const talkText = document.getElementById('talk-text');
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let talkTimer, typeTimer, faceTimer;
+function showTalk({ who, name, text }) {
+  bubble.hidden = true;
+  clearTimeout(talkTimer); clearInterval(typeTimer); clearInterval(faceTimer);
+  talkName.textContent = name;
+  talk.hidden = false;
+  let n = reducedMotion ? text.length : 0;
+  const start = performance.now();
+  const paint = () => drawPortrait(who, talkFace, (performance.now() - start) / 1000, n < text.length);
+  talkText.textContent = text.slice(0, n);
+  typeTimer = setInterval(() => {
+    n = Math.min(text.length, n + 1);
+    talkText.textContent = text.slice(0, n);
+    if (n >= text.length) clearInterval(typeTimer);
+  }, 28);
+  paint();
+  faceTimer = setInterval(paint, 90);
+  talkTimer = setTimeout(hideTalk, 4000 + text.length * 55);
+}
+function hideTalk() {
+  clearTimeout(talkTimer); clearInterval(typeTimer); clearInterval(faceTimer);
+  talk.hidden = true;
+}
+talk.addEventListener('click', hideTalk);
+addEventListener('keydown', (e) => { if (e.key === 'Escape' && !talk.hidden) hideTalk(); });
 
 const toLogical = (e) => {
   const r = canvas.getBoundingClientRect();

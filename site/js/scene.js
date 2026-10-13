@@ -21,6 +21,13 @@ const C = {
 };
 
 // ---------- tiny helpers ----------
+const lastPick = {};
+function pickFresh(key, list) {
+  let i;
+  do i = Math.floor(Math.random() * list.length); while (list.length > 1 && i === lastPick[key]);
+  lastPick[key] = i;
+  return list[i];
+}
 let ctx;
 const R = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), w, h); };
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -149,10 +156,11 @@ export function createScene(canvas, hooks = {}) {
     hearts: [],
     weather: 'clear', flashUntil: 0, nextFlash: 8,
     ac: true,
-    bulb: false, bulbGlow: 0,
+    bulb: false, bulbGlow: 0, lid: 0,
     squeeze: { at: -10, count: 0 }, // the stress-ball alien
     hold: { start: -10, until: 0, next: rand(30, 50), item: 'alien' }, // Topz picks up the alien or the mug
     coffees: 0,
+    peek: { amt: 0, target: 0, next: rand(5, 10), until: 0 }, // Kokak, behind the curtain
     chest: { open: 0, target: 0, item: null, itemAt: 0, closeAt: 0, last: -1, sparks: [] },
     roach: { x: 200, y: 170, tx: 200, ty: 170, state: 'wait', until: rand(3, 8), dir: 1, flee: false },
     mouse: { state: 'home', x: 82, dir: 1, until: rand(10, 20), tx: 82 },
@@ -172,7 +180,7 @@ export function createScene(canvas, hooks = {}) {
     { id: 'projects', label: 'Shelf · Projects', x: 235, y: 129, w: 12, h: 31 },
     { id: 'contact', label: 'Shelf · Contact (the phone lives in here)', x: 247, y: 129, w: 12, h: 31 },
     { id: 'shelf', label: 'Bookshelf', x: 222, y: 116, w: 38, h: 12 },
-    { id: 'jukebox', label: 'Jukebox · my Spotify playlists', x: 272, y: 112, w: 28, h: 50 },
+    { id: 'jukebox', label: 'Music box · my Spotify playlists', x: 270, y: 98, w: 32, h: 64 },
     { id: 'katana', label: 'Katana rack', x: 129, y: 39, w: 66, h: 30 },
     { id: 'mark', label: 'Topz', x: 116, y: 78, w: 48, h: 88 },
     { id: 'monitors', label: 'Projects · on screen', x: 86, y: 64, w: 128, h: 46 },
@@ -187,6 +195,7 @@ export function createScene(canvas, hooks = {}) {
     { id: 'hat', label: 'Straw hat', x: 127, y: 118, w: 26, h: 12 },
     { id: 'roach', label: '?', x: -99, y: 0, w: 14, h: 11 },
     { id: 'mouse', label: '?', x: -99, y: 0, w: 12, h: 9 },
+    { id: 'peeker', label: '…who is that?', x: -99, y: 0, w: 12, h: 12 },
     { id: 'frog', label: 'Frog', x: -99, y: 0, w: 11, h: 9 },
     { id: 'spider', label: 'Spider', x: -99, y: 0, w: 11, h: 9 },
     { id: 'lizard', label: 'Butiki', x: -99, y: 0, w: 14, h: 8 },
@@ -303,6 +312,7 @@ export function createScene(canvas, hooks = {}) {
       for (let r = 0; r < pw; r += 4) R(px + r, y0 - 8, 1, 2, '#9aa1b0'); // rings
     };
     panel(x0 - 8, false);
+    if (!win.sky) drawPeeker(x0 + w + 8 - pw, y0);
     panel(x0 + w + 8 - pw, true);
     if (s.blinds < 0.3) { // tie-backs while open
       R(x0 - 9, y0 + h / 2 + 4, pw + 2, 2, '#f6d365'); R(x0 + w + 7 - pw, y0 + h / 2 + 4, pw + 2, 2, '#f6d365');
@@ -318,6 +328,26 @@ export function createScene(canvas, hooks = {}) {
       R(cx, sy - 5, 7, 5, '#e9edf5'); R(cx, sy - 5, 7, 1, '#ffffff');
       R(cx + 1, sy - 8, 2, 3, C.leaf); R(cx + 4, sy - 8, 2, 3, C.leaf); R(cx + 2, sy - 10, 3, 3, '#6cc98a'); R(cx + 3, sy - 9, 1, 2, C.leafDark);
     }
+  }
+
+  // Kokak the frog lives behind the right-hand curtain and peeks out now and then
+  function drawPeeker(edge, top) {
+    const p = s.peek.amt;
+    if (p < 0.05) { box('peeker').x = -99; return; }
+    const x = edge - Math.round(p * 9), y = top + 26;
+    const g = '#5fbf6a', gL = '#8be08f', gD = '#3f8f4a';
+    const blink = Math.floor(s.t * 10) % 37 === 0;
+    R(x, y + 2, 11, 7, g); R(x + 1, y + 1, 10, 1, g);
+    R(x, y - 1, 4, 4, g); R(x + 5, y - 1, 4, 4, g); // eye bumps
+    if (blink) { R(x + 1, y + 1, 2, 1, '#15121c'); R(x + 6, y + 1, 2, 1, '#15121c'); }
+    else {
+      R(x + 1, y, 2, 2, '#f4f6fb'); R(x + 6, y, 2, 2, '#f4f6fb');
+      R(x + 1 + (p > 0.9 ? 0 : 1), y + 1, 1, 1, '#15121c'); R(x + 6 + (p > 0.9 ? 0 : 1), y + 1, 1, 1, '#15121c');
+    }
+    R(x + 1, y + 2, 2, 1, gL); R(x + 2, y + 5, 5, 1, gD); R(x, y + 4, 1, 1, '#ff8fab');
+    // a little hand gripping the curtain edge
+    R(x + 9, y + 9, 3, 2, gD); R(x + 9, y + 3, 3, 2, gD);
+    Object.assign(box('peeker'), { x: x - 2, y: y - 3, w: 14, h: 14, label: p > 0.5 ? 'Behind the curtain…' : '…' });
   }
 
   function drawNeon(d) {
@@ -358,7 +388,7 @@ export function createScene(canvas, hooks = {}) {
   }
 
   function drawClock(d) {
-    const cx = 287, cy = 90;
+    const cx = 287, cy = 85;
     R(cx - 9, cy - 7, 18, 14, C.woodDark); R(cx - 7, cy - 9, 14, 18, C.woodDark);
     R(cx - 8, cy - 6, 16, 12, C.white); R(cx - 6, cy - 8, 12, 16, C.white);
     R(cx - 1, cy - 7, 2, 1, C.greyDark); R(cx - 1, cy + 6, 2, 1, C.greyDark);
@@ -845,10 +875,12 @@ export function createScene(canvas, hooks = {}) {
   }
 
   const DRINK_LINES = [
+    'Ah, pure liquid motivation.',
+    'Sip happened. Stay hydrated.',
+    'Error 404: Thirst detected. Fixed.',
     'Water break. Recharging… 💧',
     '+10 HP.',
     'Hydrate, then debug.',
-    'Ahh. Back to the bugs.',
     'Reminder: drink some water too!',
   ];
   let drinkIdx = 0;
@@ -857,7 +889,7 @@ export function createScene(canvas, hooks = {}) {
     s.drinkStart = s.t;
     s.drinkUntil = s.t + 3.2;
     s.nextDrink = s.t + rand(40, 70);
-    hooks.say?.(DRINK_LINES[drinkIdx++ % DRINK_LINES.length], 140 + s.chair.x, 70);
+    hooks.say?.(pickFresh('drink', DRINK_LINES), 140 + s.chair.x, 70);
   }
 
 
@@ -957,39 +989,54 @@ export function createScene(canvas, hooks = {}) {
     });
   }
 
-  // an original jukebox: arch top, spinning record, equaliser grille
+  // a music box on a little walnut stand: the lid lifts and the cylinder turns while music plays
   function drawJukebox() {
-    const x = 274, y = 122, playing = s.music;
-    const hue = playing ? RGB[Math.floor(s.t * 3) % RGB.length] : C.tealDark;
-    R(x + 5, y, 14, 1, C.woodDark); R(x + 3, y + 1, 18, 2, C.woodDark); R(x + 1, y + 3, 22, 2, C.woodDark);
-    R(x, y + 5, 24, 33, C.woodDark);
-    R(x + 6, y + 1, 12, 1, C.wood); R(x + 4, y + 2, 16, 2, C.wood); R(x + 2, y + 4, 20, 2, C.wood); R(x + 1, y + 6, 22, 31, C.wood);
-    // glowing arch tube
-    R(x + 7, y + 3, 10, 1, hue); R(x + 5, y + 4, 2, 1, hue); R(x + 17, y + 4, 2, 1, hue);
-    R(x + 4, y + 5, 1, 24, hue); R(x + 19, y + 5, 1, 24, hue);
-    // record window
-    R(x + 6, y + 6, 12, 10, '#14101c');
-    R(x + 8, y + 7, 8, 8, '#0b0b10'); R(x + 7, y + 8, 10, 6, '#0b0b10');
-    R(x + 11, y + 10, 2, 2, hue);
-    const ang = playing ? Math.floor(s.t * 8) % 4 : 0;
-    const shine = [[9, 8], [14, 9], [14, 13], [9, 13]][ang];
-    R(x + shine[0], y + shine[1], 1, 1, '#4a4a5a');
-    // selection buttons
-    for (let i = 0; i < 4; i++) R(x + 6 + i * 3, y + 18, 2, 2, i === Math.floor(s.t) % 4 && playing ? '#fff3b0' : '#d3b38a');
-    // equaliser grille
-    R(x + 6, y + 22, 12, 12, '#2a1a12');
-    for (let i = 0; i < 4; i++) {
-      const lvl = playing ? 3 + Math.floor((Math.sin(s.t * (5 + i * 1.7) + i) + 1) * 4) : 2;
-      R(x + 7 + i * 3, y + 33 - lvl, 2, lvl, playing ? hue : '#4a3226');
+    const x = 272, playing = s.music;
+    const wood = C.wood, woodD = C.woodDark, woodL = C.woodLight;
+    const cream = '#efe3c2', creamD = '#cdbf98', gold = '#e0b44c', goldL = '#f6d98a', goldD = '#a87e2c';
+    // stand: legs, a shelf of records, and the top
+    R(x + 2, 148, 3, 14, woodD); R(x + 23, 148, 3, 14, woodD); R(x + 2, 148, 1, 14, woodL);
+    R(x, 132, 28, 18, wood); R(x, 132, 28, 1, woodL);
+    R(x + 2, 135, 24, 12, '#24160f');
+    const sleeves = ['#2bbecb', '#ff8fab', '#f6d365', '#8a7bd8', '#e9edf5', '#e48a5b', '#4caf6a'];
+    let sx = x + 3;
+    sleeves.forEach((c, k) => { const w = 2 + (k % 2); R(sx, 137 + (k % 3), w, 10 - (k % 3), c); R(sx, 137 + (k % 3), w, 1, '#ffffff55'); sx += w + 1; });
+    R(x + 20, 140, 6, 6, '#0b0b10'); R(x + 22, 142, 2, 2, '#e05a5a'); // a record leaning out
+    R(x, 147, 28, 2, woodL); R(x - 1, 131, 30, 2, woodL);
+    // the box
+    const lid = s.lid;
+    R(x + 2, 119, 24, 12, cream); R(x + 2, 130, 24, 1, creamD);
+    R(x + 4, 121, 20, 8, '#1f6f6b'); R(x + 4, 121, 20, 1, '#2a8f8a');
+    for (const fx of [x + 6, x + 13, x + 20]) { // sampaguita flowers
+      R(fx, 123, 3, 3, '#ffffff'); R(fx + 1, 122, 1, 1, '#ffffff'); R(fx + 1, 126, 1, 1, '#ffffff');
+      R(fx + 1, 124, 1, 1, '#f6d365'); R(fx - 1, 127, 2, 1, C.leaf);
     }
-    R(x + 2, y + 37, 4, 2, C.woodDeep); R(x + 18, y + 37, 4, 2, C.woodDeep);
-    // a tiny plant living on top
-    R(x + 9, y - 5, 6, 5, C.pot); R(x + 11, y - 9, 2, 4, C.leafDark); R(x + 9, y - 8, 2, 2, C.leaf); R(x + 13, y - 9, 2, 2, C.leaf);
+    R(x + 1, 118, 2, 13, gold); R(x + 25, 118, 2, 13, gold); R(x + 1, 118, 1, 13, goldL);
+    R(x, 116, 4, 2, goldL); R(x + 24, 116, 4, 2, goldL);
+    // winding key on the side, turning while it plays
+    const turn = playing && !reduced ? Math.floor(s.t * 3) % 2 : 0;
+    R(x + 27, 124, 2, 1, goldD); R(x + 29, turn ? 122 : 123, 1, turn ? 5 : 3, gold);
+    if (lid > 0.5) {
+      // lid swung up: a painted inside, a turning pin cylinder and its comb
+      const lh = Math.round(4 + lid * 14);
+      R(x + 3, 118 - lh, 22, lh, cream); R(x + 3, 118 - lh, 22, 1, goldL);
+      R(x + 5, 120 - lh, 18, lh - 4, '#1f6f6b');
+      const cy = 118 - lh + Math.round((lh - 4) / 2);
+      R(x + 13, cy - 1, 2, 3, gold); R(x + 12, cy, 4, 1, gold); // a little gold star
+      for (let k = 0; k < 4; k++) R(x + 7 + ((k * 5 + Math.floor(s.t * 2)) % 14), 120 - lh + 1 + (k * 3) % Math.max(1, lh - 6), 1, 1, '#ffffff88');
+      R(x + 4, 115, 20, 3, goldD); R(x + 4, 115, 20, 1, goldL);
+      for (let k = 0; k < 6; k++) R(x + 5 + ((k * 3 + Math.floor(s.t * 6)) % 18), 116, 1, 1, '#fff3b0');
+      R(x + 4, 118, 20, 1, '#c9ced8');
+    } else {
+      // closed lid
+      R(x + 2, 114, 24, 4, woodD); R(x + 2, 114, 24, 1, woodL); R(x + 2, 117, 24, 1, gold);
+      R(x + 12, 115, 4, 2, gold);
+    }
   }
 
   function drawNotes(dt) {
     if (s.music && !reduced && Math.random() < dt * 1.6)
-      s.notes.push({ x: 281 + rand(0, 10), y: 124, life: 2.4, c: RGB[Math.floor(rand(0, RGB.length))] });
+      s.notes.push({ x: 279 + rand(0, 12), y: 108, life: 2.4, c: RGB[Math.floor(rand(0, RGB.length))] });
     s.notes = s.notes.filter((n) => (n.life -= dt) > 0);
     for (const n of s.notes) {
       n.y -= dt * 9; n.x += Math.sin(n.life * 4) * dt * 6;
@@ -1038,6 +1085,24 @@ export function createScene(canvas, hooks = {}) {
     spider: ['Just hanging out.', 'I fix bugs too. The flying kind.', 'Web developer, literally.', "Don't mind me, I'm debugging the ceiling."],
     lizard: ['Tik-tik-tik!', 'Not a tuko. Butiki, thank you.', "I eat the mosquitoes. You're welcome.", 'Wall-crawling: the original responsive layout.'],
   };
+  const KOKAK_LINES = [
+    "Oh! You spotted me. I'm Kokak. I live behind this curtain. Rent is free and the aircon reaches just right.",
+    "Shh, I'm on a stakeout. Topz said 'one last bug' three hours ago. I'm keeping count.",
+    "Ribbit means 'hire Topz' in frog, by the way. I say it a lot. You should listen.",
+    "I've watched every deploy from this window. The Friday ones are the best show in Iloilo.",
+    "Close the curtains if you like. I'll still be here. I'm very committed to this curtain.",
+    "Topz talks to his code when it breaks. I talk to the moon. We both get the same answer.",
+  ];
+  const KOKAK_NIGHT = "Night shift. Somebody has to watch the stars while Topz watches the console. ✨";
+  const KOKAK_RAIN = "RAIN! Finally! Excuse me, I have to go be extremely happy about this. 🌧";
+  const KESO_LINES = [
+    "Ah, you caught me. Name's Keso. I'm only here for the crumbs under Topz's desk. Strictly professional.",
+    "This room has the best crumb-to-coder ratio in Iloilo. I checked. Twice.",
+    "Topz calls me a bug. I prefer 'unplanned feature'.",
+    "I left a paperclip on the shelf as rent. We're square.",
+    "Mochi chased me again. Mochi is very cute. Mochi is also very slow.",
+    "If you see cheese, you saw nothing. If you see me, also nothing. Squeak.",
+  ];
   const sayIdx = {};
   const sayLine = (k) => { sayIdx[k] = (sayIdx[k] || 0) + 1; return SAY[k][sayIdx[k] % SAY[k].length]; };
 
@@ -1060,9 +1125,9 @@ export function createScene(canvas, hooks = {}) {
     // mouse: lives in the hole by the cabinet
     const m = s.mouse;
     const msp = m.fast ? 70 : 40;
-    if (m.state === 'home' && s.t > m.until) { m.state = 'peek'; m.until = s.t + 1.6; m.x = 82; }
+    if (m.state === 'home' && s.t > m.until) { m.state = 'peek'; m.until = s.t + 1.6; m.x = 76; }
     else if (m.state === 'peek' && s.t > m.until) {
-      if (Math.random() < 0.65) { m.state = 'run'; m.tx = rand(90, 118); m.dir = 1; m.fast = false; }
+      if (Math.random() < 0.65) { m.state = 'run'; m.tx = rand(92, 120); m.dir = 1; m.fast = false; }
       else { m.state = 'home'; m.until = s.t + rand(8, 18); }
     } else if (m.state === 'run' || m.state === 'back') {
       const d = m.tx - m.x;
@@ -1071,7 +1136,7 @@ export function createScene(canvas, hooks = {}) {
         if (m.state === 'back') { m.state = 'home'; m.until = s.t + rand(10, 25); m.fast = false; }
         else { m.state = 'sniff'; m.until = s.t + rand(1, 2.5); }
       } else { m.x += Math.sign(d) * msp * dt; m.dir = Math.sign(d); }
-    } else if (m.state === 'sniff' && s.t > m.until) { m.state = 'back'; m.tx = 80; }
+    } else if (m.state === 'sniff' && s.t > m.until) { m.state = 'back'; m.tx = 74; }
     // frog: hops around the rug, more when it rains
     const f = s.frog;
     if (f.from) {
@@ -1106,7 +1171,8 @@ export function createScene(canvas, hooks = {}) {
   }
 
   function drawMouseHole() {
-    R(77, 120, 4, 1, '#07070c'); R(76, 121, 6, 3, '#07070c'); R(76, 124, 6, 4, '#07070c');
+    R(76, 118, 6, 1, '#07070c'); R(75, 119, 8, 2, '#07070c'); R(74, 121, 10, 7, '#07070c');
+    R(74, 127, 10, 1, '#2c3150');
   }
 
   function drawLizard() {
@@ -1151,18 +1217,26 @@ export function createScene(canvas, hooks = {}) {
     const m = s.mouse;
     if (m.state === 'home') box('mouse').x = -99;
     else {
-      const y = 125, d = m.state === 'peek' ? 1 : m.dir;
-      const x = Math.round(m.state === 'peek' ? 81 : m.x);
-      const body = '#9aa1b0';
+      const d = m.state === 'peek' ? 1 : m.dir, y = 120;
+      const x = Math.round(m.state === 'peek' ? 76 : m.x);
+      const body = '#8a87b8', light = '#b3b0d8', dark = '#5f5c8c', pink = '#ffb3c7', inner = '#ff8fab';
+      const step = m.state === 'run' || m.state === 'back' ? Math.floor(s.t * 14) % 2 : 0;
+      const fx = (dx, w = 1) => (d > 0 ? x + dx : x + 12 - dx - w); // mirror when facing left
+      const r = (dx, dy, w, h, c) => R(fx(dx, w), y + dy, w, h, c);
       if (m.state !== 'peek') {
-        R(x, y, 5, 3, body); R(x + 1, y, 3, 1, '#b7bdc9');
-        R(d > 0 ? x - 3 : x + 5, y + 2, 3, 1, '#d8a0a8');
-        if (Math.floor(s.t * 14) % 2) R(x + 1, y + 3, 1, 1, '#6b7183'); else R(x + 3, y + 3, 1, 1, '#6b7183');
+        // long pink tail, curling up at the end
+        r(-6, 5, 6, 1, pink); r(-7, 3, 1, 2, pink); r(-6, 2, 1, 1, pink);
+        // body
+        r(1, 2, 7, 5, body); r(0, 3, 9, 3, body); r(2, 2, 4, 1, light); r(1, 6, 7, 1, dark);
+        // feet, scurrying
+        r(2 + step, 7, 2, 1, pink); r(6 - step, 7, 2, 1, pink);
       }
-      const hx = d > 0 ? x + 5 : x - 2;
-      R(hx, y + 1, 2, 2, body); R(d > 0 ? hx + 2 : hx - 1, y + 2, 1, 1, '#d8a0a8');
-      R(d > 0 ? hx : hx + 1, y, 1, 1, '#e8b4bc'); R(d > 0 ? hx + 1 : hx, y + 1, 1, 1, '#0d0f1c');
-      Object.assign(box('mouse'), { x: x - 4, y: y - 3, w: 14, h: 9, label: 'Mouse' });
+      // head, big round ear, eye, pink nose and whiskers
+      r(8, 2, 4, 4, body); r(11, 4, 2, 2, body); r(13, 4, 1, 1, inner);
+      r(7, -1, 4, 4, body); r(8, 0, 2, 2, inner);
+      r(10, 3, 1, 1, '#15121c');
+      r(12, 6, 2, 1, light);
+      Object.assign(box('mouse'), { x: Math.min(fx(-7, 1), fx(14, 1)) - 1, y: y - 3, w: 23, h: 12, label: 'Mouse' });
     }
   }
   function drawFrog() {
@@ -1187,8 +1261,18 @@ export function createScene(canvas, hooks = {}) {
       r.flee = true; r.state = 'run'; r.tx = r.x < W / 2 ? -8 : W + 8; r.ty = r.y; return true;
     }
     if (id === 'mouse') {
-      const m = s.mouse; hooks.say?.(sayLine('mouse'), (m.state === 'peek' ? 82 : m.x) + 2, 132);
-      m.state = 'back'; m.tx = 80; m.fast = true; return true;
+      const m = s.mouse;
+      hooks.talk?.({ who: 'mouse', name: 'Keso, the crumb collector', text: pickFresh('keso', KESO_LINES) });
+      m.state = 'back'; m.tx = 74; m.fast = true; return true;
+    }
+    if (id === 'peeker') {
+      const h = iloiloNow().getHours(), wet = s.weather === 'rain' || s.weather === 'storm';
+      const text = wet && Math.random() < 0.5 ? KOKAK_RAIN
+        : (h >= 20 || h < 5) && Math.random() < 0.4 ? KOKAK_NIGHT
+        : pickFresh('kokak', KOKAK_LINES);
+      hooks.talk?.({ who: 'kokak', name: 'Kokak, behind the curtain', text });
+      s.peek.target = 1; s.peek.until = s.t + 9; // stays out while you talk
+      return true;
     }
     if (id === 'frog') {
       const f = s.frog, wet = s.weather === 'rain' || s.weather === 'storm';
@@ -1409,6 +1493,11 @@ export function createScene(canvas, hooks = {}) {
       if (s.doorsTarget[i] && s.t > s.doorsCloseAt[i]) s.doorsTarget[i] = 0;
       s.doors[i] += (s.doorsTarget[i] - s.doors[i]) * Math.min(1, dt * (reduced ? 60 : 9));
     }
+    const pk = s.peek;
+    if (s.t > pk.next && pk.target === 0) { pk.target = 1; pk.until = s.t + rand(6, 10); }
+    if (pk.target === 1 && s.t > pk.until) { pk.target = 0; pk.next = s.t + rand(8, 18); }
+    pk.amt += (pk.target - pk.amt) * Math.min(1, dt * (reduced ? 60 : 3));
+    s.lid += ((s.music ? 1 : 0) - s.lid) * Math.min(1, dt * (reduced ? 60 : 4));
     s.bulbGlow = reduced ? (s.bulb ? 1 : 0) : s.bulbGlow + ((s.bulb ? 1 : 0) - s.bulbGlow) * Math.min(1, dt * 8);
 
     if (s.t > s.nextBlink) { s.blinkUntil = s.t + 0.14; s.nextBlink = s.t + rand(2.5, 5.5); }
@@ -1478,7 +1567,7 @@ export function createScene(canvas, hooks = {}) {
   // ---------- input ----------
   function hit(x, y) {
     // critters first: they wander in front of things
-    const order = ['roach', 'mouse', 'frog', 'spider', 'lizard', 'chest', 'dog', 'bottle', 'alien', 'mug', 'hat', 'bulb', 'aircon', 'jukebox', 'about', 'projects', 'contact', 'shelf', 'katana', 'mark', 'pc', 'monitors', 'window', 'window2'];
+    const order = ['peeker', 'roach', 'mouse', 'frog', 'spider', 'lizard', 'chest', 'dog', 'bottle', 'alien', 'mug', 'hat', 'bulb', 'aircon', 'jukebox', 'about', 'projects', 'contact', 'shelf', 'katana', 'mark', 'pc', 'monitors', 'window', 'window2'];
     for (const id of order) {
       const o = objects.find((ob) => ob.id === id);
       if (x >= o.x && x < o.x + o.w && y >= o.y && y < o.y + o.h) return o;
@@ -1556,6 +1645,47 @@ export function createScene(canvas, hooks = {}) {
     get weather() { return s.weather; },
     toggleBlinds() { s.blindsTarget = s.blindsTarget ? 0 : 1; },
   };
+}
+
+// ---------- big portraits for the character card (32×32, drawn with the same R) ----------
+export function drawPortrait(who, canvas, t, talking) {
+  const prev = ctx;
+  ctx = canvas.getContext('2d');
+  canvas.width = 32; canvas.height = 32;
+  ctx.clearRect(0, 0, 32, 32);
+  const blink = Math.floor(t * 10) % 41 < 2;
+  const mouth = talking && Math.floor(t * 8) % 2;
+  if (who === 'kokak') {
+    const g = '#5fbf6a', gL = '#8be08f', gD = '#3f8f4a', b = '#c9f5cb';
+    // peeking out from behind a teal curtain
+    R(4, 10, 24, 12, g); R(3, 12, 26, 8, g); R(6, 9, 20, 1, g);
+    R(5, 3, 9, 9, g); R(18, 3, 9, 9, g); R(6, 4, 3, 2, gL); R(19, 4, 3, 2, gL);
+    if (blink) { R(7, 8, 6, 1, '#15121c'); R(20, 8, 6, 1, '#15121c'); }
+    else {
+      R(6, 5, 7, 6, '#f4f6fb'); R(19, 5, 7, 6, '#f4f6fb');
+      R(9, 7, 3, 3, '#15121c'); R(22, 7, 3, 3, '#15121c'); R(9, 7, 1, 1, '#ffffff'); R(22, 7, 1, 1, '#ffffff');
+    }
+    R(5, 14, 3, 2, '#ff8fab'); R(24, 14, 3, 2, '#ff8fab');
+    if (mouth) { R(10, 15, 12, 4, '#2a1a20'); R(12, 17, 8, 2, '#e05a5a'); }
+    else { R(9, 16, 14, 1, gD); R(8, 15, 1, 1, gD); R(23, 15, 1, 1, gD); }
+    R(9, 19, 14, 3, b);
+    R(6, 22, 20, 10, g); R(10, 22, 12, 10, b); R(4, 25, 5, 3, gD); R(23, 25, 5, 3, gD);
+    R(0, 0, 6, 32, '#2a8f8a'); for (let x = 1; x < 6; x += 2) R(x, 0, 1, 32, '#1d6b67'); R(5, 0, 1, 32, '#43b3a9');
+  } else if (who === 'mouse') {
+    const body = '#8a87b8', light = '#b3b0d8', dark = '#5f5c8c', pink = '#ffb3c7', inner = '#ff8fab';
+    R(2, 3, 11, 11, body); R(4, 5, 7, 7, inner); R(19, 3, 11, 11, body); R(21, 5, 7, 7, inner);
+    R(7, 9, 18, 12, body); R(6, 11, 20, 8, body); R(8, 9, 6, 1, light);
+    if (blink) { R(10, 14, 3, 1, '#15121c'); R(19, 14, 3, 1, '#15121c'); }
+    else { R(10, 13, 3, 3, '#15121c'); R(19, 13, 3, 3, '#15121c'); R(10, 13, 1, 1, '#ffffff'); R(19, 13, 1, 1, '#ffffff'); }
+    R(12, 17, 8, 5, light); R(15, 17, 2, 2, '#ff6f91');
+    if (mouth) R(14, 20, 4, 2, '#3a1e2a'); else R(15, 20, 2, 1, dark);
+    R(3, 18, 7, 1, light); R(22, 18, 7, 1, light); R(4, 20, 6, 1, light); R(22, 20, 6, 1, light);
+    R(8, 22, 16, 10, body); R(12, 23, 8, 9, light);
+    R(12, 25, 7, 5, '#f6d365'); R(13, 26, 1, 1, '#c9a227'); R(16, 28, 1, 1, '#c9a227'); // a crumb of cheese
+    R(10, 26, 3, 3, pink); R(19, 26, 3, 3, pink);
+    R(24, 28, 6, 1, pink); R(29, 24, 1, 4, pink); R(28, 23, 1, 1, pink);
+  }
+  ctx = prev;
 }
 
 // colour lerp for the sky gradient

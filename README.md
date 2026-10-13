@@ -12,15 +12,17 @@
 | Light bulb | Switches the ceiling light on/off — the room warms up and brightens, most noticeably at night |
 | Topz | Says something. His chair rolls about on its own |
 | Mochi | Wakes up, or says hi |
-| Jukebox | Shows what Topz is listening to right now (see `worker/README.md`), and plays his playlists. While music plays, the jukebox lights up, Topz nods along and taps his foot. |
+| Music box | A music box on a little walnut stand. Shows what Topz is listening to right now (see `worker/README.md`), and plays his playlists. While music plays, the lid lifts, the cylinder turns, notes float up, and Topz nods along and taps his foot. |
 | Katana rack | Three display swords (original designs) |
 | Coffee mug | Topz grabs it, takes two sips with his head tipped back, and puts it back. A coffee line, then a sip line (with specials for coffee #3, #5 and #10). He also has coffee on his own now and then |
 | Stress ball alien (beside the mug) | Topz picks it up and squeezes it three times (eyes bulging), then puts it back. He vents about a dev problem and the alien complains. He also grabs it on his own now and then. Milestones at 10, 25, 50 and 100 squeezes |
-| Water bottle | Topz takes a sip (he also does on his own) |
+| Water bottle | Topz takes a sip (he also does on his own), with a random line: "Ah, pure liquid motivation.", "Sip happened. Stay hydrated.", "Error 404: Thirst detected. Fixed."… |
 | Aircon | On/off |
 | Straw hat | Hangs on the chair; says something |
 | Treasure chest | Opens with a sparkle and pops out a random find, each with its own line (the golden rubber duck is rare) |
-| Cockroach, mouse, frog, spider, green butiki | They roam the room. Click them. |
+| Kokak (the frog peeking from behind the right curtain) | Opens a character card with his portrait and a line (special ones at night and in the rain) |
+| Keso the mouse | Comes out of his hole by the desk. Click him for a character card, then he scurries home |
+| Cockroach, frog, spider, green butiki | They roam the room. Click them. |
 
 The buttons under the room (or keys **1–4**) open the same panels, so everything works without hunting.
 

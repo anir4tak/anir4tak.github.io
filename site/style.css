@@ -303,3 +303,37 @@ main {
 .photo { margin: 0; text-align: center; }
 .photo img { max-width: 100%; max-height: 60vh; box-shadow: 0 0 0 4px var(--panel-2), 0 0 0 6px var(--line); }
 .photo figcaption { margin-top: 14px; color: var(--muted); }
+
+/* ---------- character card: a big portrait and a dialogue box ---------- */
+.talk {
+  position: absolute; left: 6%; right: 6%; bottom: 5%;
+  z-index: 3; cursor: pointer;
+  animation: talk-in .2s steps(4);
+}
+.talk-face {
+  position: absolute; left: 4%; bottom: calc(100% - 14px); z-index: 1;
+  width: clamp(72px, 22%, 160px); aspect-ratio: 1;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 4px 0 #05060daa);
+}
+.talk-box {
+  position: relative;
+  background: #e9edf5; color: #15121c;
+  border: 3px solid #15121c;
+  box-shadow: 0 0 0 3px var(--teal), 0 8px 0 3px #05060d88;
+  padding: 26px 18px 14px;
+  font: 400 clamp(14px, 1.6vw, 19px)/1.35 'Pixelify Sans', monospace;
+}
+.talk-name {
+  position: absolute; top: -16px; left: clamp(84px, 26%, 180px);
+  background: #8a7bd8; color: #fff;
+  padding: 3px 10px;
+  border: 3px solid #15121c;
+  font: 600 clamp(12px, 1.3vw, 16px) 'Pixelify Sans', monospace;
+  letter-spacing: .04em; text-transform: uppercase;
+}
+.talk-text { margin: 0; min-height: 2.7em; }
+.talk-more { position: absolute; right: 12px; bottom: 4px; font-size: 12px; color: #5d6578; animation: blink 1s steps(2) infinite; }
+@keyframes talk-in { from { transform: translateY(12px); opacity: 0; } }
+@keyframes blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .talk, .talk-more { animation: none; } }
