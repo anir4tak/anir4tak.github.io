@@ -4,7 +4,7 @@
 export const W = 320;
 const RGB_DEFAULT = 0;
 export const H = 180;
-const FLOOR_Y = 140;
+const FLOOR_Y = 128;
 
 const C = {
   wallTop: '#171a2c', wall: '#1d2136', wallDot: '#232842', trim: '#2c3150', base: '#121424',
@@ -95,10 +95,18 @@ const GLYPHS = {
   Z: ['11111', '00001', '00010', '00100', '01000', '10000', '11111'],
 };
 
-// stable pseudo-random stars
-const STARS = Array.from({ length: 22 }, (_, i) => ({
-  x: 21 + ((i * 37) % 58), y: 31 + ((i * 53) % 50), p: (i * 0.7) % 6.28,
+// stable pseudo-random stars, relative to each window's glass
+const STARS = Array.from({ length: 16 }, (_, i) => ({
+  x: 1 + ((i * 37) % 54), y: 1 + ((i * 53) % 30), p: (i * 0.7) % 6.28,
 }));
+// the two windows (glass area); the sun and moon live in the left one
+const WINDOWS = [
+  { id: 'window', x: 20, y: 20, w: 56, h: 44, sky: true, seed: 0 },
+  { id: 'window2', x: 246, y: 20, w: 56, h: 44, sky: false, seed: 4 },
+];
+// the shelf with three doors: each column opens a panel
+const SHELF = { x: 222, y: 128 };
+const SHELF_COLS = ['about', 'projects', 'contact'];
 
 // ---------- time of day (the viewer's own clock) ----------
 // Topz's window shows Topz's sky: Iloilo time (UTC+8, no daylight saving)
@@ -130,7 +138,9 @@ export function createScene(canvas, hooks = {}) {
   const s = {
     t: 0,
     hover: null,
-    blinds: 0, blindsTarget: 0,          // 0 open, 1 closed
+    blinds: 0, blindsTarget: 0,          // curtains: 0 open, 1 closed
+    doors: [0, 0, 0], doorsTarget: [0, 0, 0], doorsCloseAt: [0, 0, 0], // shelf doors
+    chair: { x: 0, tx: 0, next: rand(6, 12) }, // the chair rolls about a little
     blinkUntil: 0, nextBlink: 2,
     stretchUntil: 0, nextStretch: rand(14, 24),
     drinkStart: -10, drinkUntil: 0, nextDrink: rand(18, 30),
@@ -143,7 +153,7 @@ export function createScene(canvas, hooks = {}) {
     chest: { open: 0, target: 0, item: null, itemAt: 0, closeAt: 0, last: -1, sparks: [] },
     roach: { x: 200, y: 170, tx: 200, ty: 170, state: 'wait', until: rand(3, 8), dir: 1, flee: false },
     mouse: { state: 'home', x: 82, dir: 1, until: rand(10, 20), tx: 82 },
-    frog: { x: 196, y: 168, from: null, to: null, hopAt: 0, next: rand(3, 7) },
+    frog: { x: 176, y: 169, from: null, to: null, hopAt: 0, next: rand(3, 7) },
     spider: { y: 16, ty: 40, state: 'wait', until: rand(4, 10) },
     lizard: { x: 250, y: 46, dir: -1, tx: 240, ty: 70, state: 'freeze', until: rand(2, 6) },
     notes: [],
@@ -153,23 +163,24 @@ export function createScene(canvas, hooks = {}) {
   };
 
   const objects = [
-    { id: 'window', label: 'Window · open/close the blind', x: 16, y: 26, w: 68, h: 70 },
-    { id: 'projects', label: 'Projects', x: 90, y: 40, w: 56, h: 46 },
-    { id: 'about', label: 'About me', x: 194, y: 38, w: 52, h: 38 },
-    { id: 'shelf', label: 'Bookshelf', x: 268, y: 50, w: 50, h: 98 },
-    { id: 'jukebox', label: 'Jukebox · my Spotify playlists', x: 241, y: 108, w: 28, h: 42 },
-    { id: 'katana', label: 'Katana rack', x: 193, y: 7, w: 66, h: 30 },
-    { id: 'contact', label: 'Contact · the phone', x: 24, y: 100, w: 30, h: 18 },
-    { id: 'mark', label: 'Topz', x: 146, y: 62, w: 48, h: 86 },
-    { id: 'monitors', label: 'Projects · on screen', x: 126, y: 72, w: 88, h: 38 },
-    { id: 'pc', label: 'PC · change the RGB', x: 216, y: 70, w: 24, h: 42 },
-    { id: 'bottle', label: 'Water bottle · take a sip', x: 194, y: 96, w: 8, h: 15 },
-    { id: 'mug', label: 'Mug · "This MEETING should have been an EMAIL"', x: 112, y: 98, w: 13, h: 13 },
+    { id: 'window', label: 'Window · open/close the curtains', x: 12, y: 10, w: 72, h: 66 },
+    { id: 'window2', label: 'Window · open/close the curtains', x: 238, y: 10, w: 72, h: 66 },
+    { id: 'about', label: 'Shelf · About me', x: 223, y: 129, w: 12, h: 31 },
+    { id: 'projects', label: 'Shelf · Projects', x: 235, y: 129, w: 12, h: 31 },
+    { id: 'contact', label: 'Shelf · Contact (the phone lives in here)', x: 247, y: 129, w: 12, h: 31 },
+    { id: 'shelf', label: 'Bookshelf', x: 222, y: 116, w: 38, h: 12 },
+    { id: 'jukebox', label: 'Jukebox · my Spotify playlists', x: 272, y: 112, w: 28, h: 50 },
+    { id: 'katana', label: 'Katana rack', x: 129, y: 39, w: 66, h: 30 },
+    { id: 'mark', label: 'Topz', x: 116, y: 78, w: 48, h: 88 },
+    { id: 'monitors', label: 'Projects · on screen', x: 86, y: 64, w: 128, h: 46 },
+    { id: 'pc', label: 'PC · change the RGB', x: 218, y: 70, w: 24, h: 42 },
+    { id: 'bottle', label: 'Water bottle · take a sip', x: 175, y: 96, w: 8, h: 15 },
+    { id: 'mug', label: 'Mug · "This MEETING should have been an EMAIL"', x: 62, y: 98, w: 14, h: 13 },
     { id: 'dog', label: 'Mochi', x: 0, y: 0, w: 18, h: 14 },
-    { id: 'aircon', label: 'Aircon · on/off', x: 90, y: 3, w: 44, h: 18 },
-    { id: 'bulb', label: 'Light bulb · on/off', x: 45, y: 0, w: 14, h: 24 },
-    { id: 'chest', label: 'Treasure chest · open me', x: 268, y: 148, w: 30, h: 24 },
-    { id: 'hat', label: 'Straw hat', x: 157, y: 102, w: 26, h: 12 },
+    { id: 'aircon', label: 'Aircon · on/off', x: 132, y: 2, w: 60, h: 18 },
+    { id: 'bulb', label: 'Light bulb · on/off', x: 87, y: 0, w: 14, h: 24 },
+    { id: 'chest', label: 'Treasure chest · open me', x: 14, y: 138, w: 30, h: 30 },
+    { id: 'hat', label: 'Straw hat', x: 127, y: 118, w: 26, h: 12 },
     { id: 'roach', label: '?', x: -99, y: 0, w: 14, h: 11 },
     { id: 'mouse', label: '?', x: -99, y: 0, w: 12, h: 9 },
     { id: 'frog', label: 'Frog', x: -99, y: 0, w: 11, h: 9 },
@@ -197,13 +208,13 @@ export function createScene(canvas, hooks = {}) {
       for (let x = off; x < W; x += 48) R(x, y, 1, 6, C.floorLine);
     }
     // a soft rug under the desk
-    R(108, 158, 124, 14, '#9aa1b0');
-    R(110, 160, 120, 10, '#d4d8e0');
-    for (let x = 112; x < 228; x += 6) R(x, 164, 3, 2, '#b2b8c4');
-    R(108, 158, 124, 1, '#6b7183');
+    R(84, 158, 112, 15, '#9aa1b0');
+    R(86, 160, 108, 11, '#d4d8e0');
+    for (let x = 88; x < 192; x += 6) R(x, 165, 3, 2, '#b2b8c4');
+    R(84, 158, 112, 1, '#6b7183');
   }
 
-  function drawWindow(d) {
+  function drawWindow(d, win) {
     const { phase } = daylight(d);
     const wx = s.weather;
     const wet = wx === 'rain' || wx === 'storm';
@@ -212,102 +223,103 @@ export function createScene(canvas, hooks = {}) {
     if (gloomy) { const g = phase === 'night' ? '#151a2c' : '#6d7484'; top = mix(top, g, 0.6); bottom = mix(bottom, g, 0.6); }
     const flash = s.t < s.flashUntil;
     if (flash) { top = '#e9eefc'; bottom = '#c9d3f0'; }
-    const x0 = 20, y0 = 30, w = 60, h = 54;
+    const { x: x0, y: y0, w, h } = win;
     for (let j = 0; j < h; j++) {
-      const k = j / h;
-      ctx.fillStyle = mix(top, bottom, k);
+      ctx.fillStyle = mix(top, bottom, j / h);
       ctx.fillRect(x0, y0 + j, w, 1);
     }
     if (!gloomy && (phase === 'night' || phase === 'dusk')) {
       for (const st of STARS) {
-        const tw = Math.sin(s.t * 2 + st.p) > 0.2;
-        if (phase === 'night' || st.y < 45) R(st.x, st.y, 1, 1, tw ? '#ffffff' : '#7d86b8');
+        const tw = Math.sin(s.t * 2 + st.p + win.seed) > 0.2;
+        const sx = x0 + ((st.x + win.seed * 13) % w);
+        if (phase === 'night' || st.y < 14) R(sx, y0 + st.y, 1, 1, tw ? '#ffffff' : '#7d86b8');
       }
     }
-    if (gloomy) { /* sun and moon hidden behind the clouds */ } else if (phase === 'night') {
-      R(62, 36, 7, 7, '#f3f0d6'); R(64, 36, 5, 1, '#f3f0d6');
-      R(61, 37, 1, 5, '#f3f0d6'); R(65, 38, 4, 4, '#dcd6b0');
-      R(63, 37, 6, 5, '#070a22'); // crescent bite
-      R(62, 36, 2, 7, '#f3f0d6');
+    if (!win.sky || gloomy) { /* one sun or moon for the room, hidden by clouds */ } else if (phase === 'night') {
+      const mx = x0 + 40, my = y0 + 5;
+      R(mx, my, 7, 7, '#f3f0d6'); R(mx + 2, my, 5, 1, '#f3f0d6');
+      R(mx - 1, my + 1, 1, 5, '#f3f0d6'); R(mx + 3, my + 2, 4, 4, '#dcd6b0');
+      R(mx + 1, my + 1, 6, 5, top); // crescent bite
+      R(mx, my, 2, 7, '#f3f0d6');
     } else {
-      const sunY = phase === 'day' ? 38 : 66;
-      R(64, sunY, 8, 8, phase === 'day' ? '#fff3b0' : '#ffd08a');
-      R(63, sunY + 1, 10, 6, phase === 'day' ? '#fff3b0' : '#ffd08a');
+      const sunY = y0 + (phase === 'day' ? 7 : 28);
+      R(x0 + 42, sunY, 8, 8, phase === 'day' ? '#fff3b0' : '#ffd08a');
+      R(x0 + 41, sunY + 1, 10, 6, phase === 'day' ? '#fff3b0' : '#ffd08a');
     }
+    ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, w, h); ctx.clip();
     // drifting clouds
     if (phase !== 'night' || gloomy) {
       const cc = gloomy ? (phase === 'night' ? '#262b40' : '#a7adba') : phase === 'day' ? '#ffffff' : '#f7c4a8';
-      for (let i = 0; i < (gloomy ? 6 : 3); i++) {
-        const cx = x0 - 20 + ((s.t * (2 + i) + i * 31) % (w + 30));
-        const cy = y0 + (gloomy ? 4 + i * 6 : 8 + i * 13);
-        ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, w, h); ctx.clip();
+      for (let i = 0; i < (gloomy ? 5 : 3); i++) {
+        const cx = x0 - 20 + ((s.t * (2 + i) + i * 31 + win.seed * 17) % (w + 30));
+        const cy = y0 + (gloomy ? 4 + i * 6 : 6 + i * 10);
         R(cx, cy, 14, 3, cc); R(cx + 3, cy - 2, 7, 2, cc); R(cx + 2, cy + 3, 10, 1, cc);
-        ctx.restore();
       }
     }
     // far skyline silhouette
     const sil = phase === 'day' ? '#3a6f98' : phase === 'night' ? '#0c1233' : '#3a2d63';
-    const blds = [[20, 10], [27, 16], [33, 8], [40, 20], [47, 12], [55, 18], [62, 9], [68, 14], [74, 11]];
-    for (const [bx, bh] of blds) R(bx, 84 - bh, 7, bh, sil);
-    if (phase !== 'day') for (const [bx, bh] of blds) if (bh > 10) R(bx + 2, 84 - bh + 3, 1, 1, '#ffd36b');
-
+    const hs = [10, 16, 8, 20, 12, 18, 9, 14, 11];
+    for (let i = 0; i < hs.length; i++) {
+      const bh = hs[(i + win.seed) % hs.length], bx = x0 + i * 7 - 2;
+      R(bx, y0 + h - bh, 7, bh, sil);
+      if (phase !== 'day' && bh > 10) R(bx + 2, y0 + h - bh + 3, 1, 1, '#ffd36b');
+    }
     // weather on the glass
-    ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, w, h); ctx.clip();
     if (wet) {
-      const n = wx === 'storm' ? 34 : 22;
+      const n = wx === 'storm' ? 28 : 18;
       for (let i = 0; i < n; i++) {
         const rx = x0 - 6 + ((i * 23 + s.t * 18) % (w + 12));
         const ry = y0 + ((i * 41 + s.t * (wx === 'storm' ? 110 : 80)) % h);
         R(rx, ry, 1, 2, '#c9d8efaa'); R(rx - 1, ry + 2, 1, 2, '#c9d8ef66');
       }
-      for (let i = 0; i < 7; i++) { // drops sliding down the pane
-        const dx = x0 + 3 + ((i * 17) % (w - 6)), dy = y0 + ((i * 29 + s.t * (3 + i % 3)) % h);
+      for (let i = 0; i < 6; i++) { // drops sliding down the pane
+        const dx = x0 + 3 + ((i * 17 + win.seed * 5) % (w - 6)), dy = y0 + ((i * 29 + s.t * (3 + i % 3)) % h);
         R(dx, dy, 1, 2, '#e4eefc'); R(dx, dy - 3, 1, 3, '#e4eefc44');
       }
     }
     if (wx === 'fog') { ctx.fillStyle = '#c9ced866'; ctx.fillRect(x0, y0, w, h); }
     ctx.restore();
 
-    // roller blind
-    const bh = Math.round(s.blinds * h);
-    if (bh > 0) {
-      R(x0, y0, w, bh, '#cfd6e2');
-      for (let y = y0 + 3; y < y0 + bh; y += 4) R(x0, y, w, 1, '#b4bdcc');
-      R(x0, y0 + bh - 2, w, 2, '#8d97a8');
-      R(x0 + w / 2 - 1, y0 + bh, 2, 3, '#8d97a8');
-    }
-    // frame
-    R(16, 26, 68, 4, C.wood); R(16, 84, 68, 4, C.wood);
-    R(16, 26, 4, 62, C.wood); R(80, 26, 4, 62, C.wood);
-    R(49, 30, 2, 54, C.wood); R(20, 56, 60, 2, C.wood);
-    R(16, 26, 68, 1, C.woodLight);
-    R(13, 88, 74, 4, C.woodLight); R(13, 91, 74, 1, C.woodDark);
-    R(18, 22, 64, 4, '#3a3f58'); R(18, 22, 64, 1, '#4a5070');
-    // a little cactus on the sill
-    R(70, 81, 6, 7, C.pot); R(69, 81, 8, 2, '#d27b52');
-    R(72, 74, 3, 7, C.leaf); R(70, 76, 2, 3, C.leaf); R(75, 75, 2, 3, C.leaf); R(73, 74, 1, 7, C.leafDark);
-  }
+    // frame, cross bars and sill
+    R(x0 - 4, y0 - 4, w + 8, 4, C.wood); R(x0 - 4, y0 + h, w + 8, 4, C.wood);
+    R(x0 - 4, y0 - 4, 4, h + 8, C.wood); R(x0 + w, y0 - 4, 4, h + 8, C.wood);
+    R(x0 + w / 2 - 1, y0, 2, h, C.wood); R(x0, y0 + h / 2 - 1, w, 2, C.wood);
+    R(x0 - 4, y0 - 4, w + 8, 1, C.woodLight);
+    R(x0 - 7, y0 + h + 4, w + 14, 4, C.woodLight); R(x0 - 7, y0 + h + 7, w + 14, 1, C.woodDark);
 
-  function drawFrames() {
-    // three framed website thumbnails = projects
-    const frames = [[92, 44, 24, 18, '#4fb3c9'], [120, 44, 24, 18, '#e48a5b'], [100, 66, 36, 18, '#8a7bd8']];
-    for (const [x, y, w, h, accent] of frames) {
-      R(x - 1, y - 1, w + 2, h + 2, '#0f1120');
-      R(x, y, w, h, C.woodDark);
-      R(x + 2, y + 2, w - 4, h - 4, '#f4f6fb');
-      R(x + 2, y + 2, w - 4, 3, accent);
-      R(x + 4, y + 7, (w - 8) * 0.6, 2, '#2b3245');
-      R(x + 4, y + 10, (w - 8) * 0.8, 1, '#9aa3b5');
-      R(x + 4, y + 12, (w - 8) * 0.5, 1, '#9aa3b5');
-      if (h > 16) R(x + w - 10, y + 7, 6, 6, accent);
+    // curtains: two panels that slide together when closed
+    R(x0 - 10, y0 - 9, w + 20, 2, '#3a3f58'); R(x0 - 11, y0 - 10, 3, 4, '#4a5070'); R(x0 + w + 8, y0 - 10, 3, 4, '#4a5070');
+    const pw = Math.round(6 + (w / 2 + 2) * s.blinds);
+    const fab = '#2a8f8a', fabD = '#1d6b67', fabL = '#43b3a9';
+    const panel = (px, flipFold) => {
+      R(px, y0 - 7, pw, h + 17, fab);
+      for (let fx = px + (flipFold ? 1 : 2); fx < px + pw; fx += 3) R(fx, y0 - 6, 1, h + 15, fabD);
+      R(px, y0 - 7, pw, 1, fabL);
+      R(px, y0 + h + 9, pw, 1, fabD);
+      for (let r = 0; r < pw; r += 4) R(px + r, y0 - 8, 1, 2, '#9aa1b0'); // rings
+    };
+    panel(x0 - 8, false);
+    panel(x0 + w + 8 - pw, true);
+    if (s.blinds < 0.3) { // tie-backs while open
+      R(x0 - 9, y0 + h / 2 + 4, pw + 2, 2, '#f6d365'); R(x0 + w + 7 - pw, y0 + h / 2 + 4, pw + 2, 2, '#f6d365');
     }
-    R(103, 42, 1, 2, C.grey); R(131, 42, 1, 2, C.grey);
+    // something on each sill
+    const sy = y0 + h + 4;
+    if (win.sky) { // a little cactus
+      const cx = x0 + 44;
+      R(cx, sy - 7, 6, 7, C.pot); R(cx - 1, sy - 7, 8, 2, '#d27b52');
+      R(cx + 2, sy - 14, 3, 7, C.leaf); R(cx, sy - 12, 2, 3, C.leaf); R(cx + 5, sy - 13, 2, 3, C.leaf); R(cx + 3, sy - 14, 1, 7, C.leafDark);
+    } else { // a succulent
+      const cx = x0 + 8;
+      R(cx, sy - 5, 7, 5, '#e9edf5'); R(cx, sy - 5, 7, 1, '#ffffff');
+      R(cx + 1, sy - 8, 2, 3, C.leaf); R(cx + 4, sy - 8, 2, 3, C.leaf); R(cx + 2, sy - 10, 3, 3, '#6cc98a'); R(cx + 3, sy - 9, 1, 2, C.leafDark);
+    }
   }
 
   function drawNeon(d) {
     const off = !reduced && s.t < s.neonOffUntil;
     const letters = 'TOPZ';
-    const x0 = 136, y0 = 12;
+    const x0 = 138, y0 = 21;
     const lit = off ? '#4a5068' : '#ffffff';
     if (!off) {
       ctx.save();
@@ -331,7 +343,7 @@ export function createScene(canvas, hooks = {}) {
       }
     }
     // tiny caption under the sign
-    R(146, 30, 28, 1, off ? '#3a3f58' : '#a9afbd');
+    R(148, 39, 28, 1, off ? '#3a3f58' : '#a9afbd');
   }
   function drawWord(word, x0, y0, color) {
     for (let n = 0; n < word.length; n++) {
@@ -341,25 +353,8 @@ export function createScene(canvas, hooks = {}) {
     }
   }
 
-  function drawCork() {
-    R(194, 38, 52, 38, C.woodDark);
-    R(196, 40, 48, 34, C.cork);
-    for (let i = 0; i < 30; i++) R(197 + ((i * 17) % 46), 41 + ((i * 11) % 32), 1, 1, C.corkDark);
-    // polaroid of Mark
-    R(200, 44, 14, 17, C.paper);
-    R(201, 45, 12, 11, '#6fa3c7');
-    R(205, 47, 4, 4, C.skin); R(205, 46, 4, 1, C.hair); R(204, 51, 6, 5, C.hoodie);
-    R(206, 43, 2, 2, C.red);
-    // sticky notes
-    R(218, 44, 10, 10, C.note1); R(220, 47, 6, 1, '#b8952e'); R(220, 50, 4, 1, '#b8952e');
-    R(230, 46, 10, 10, C.note2); R(232, 49, 6, 1, '#b05470'); R(232, 52, 5, 1, '#b05470');
-    R(218, 58, 22, 12, C.paper); R(220, 60, 14, 1, '#7c8597'); R(220, 63, 18, 1, '#7c8597'); R(220, 66, 10, 1, '#7c8597');
-    R(201, 64, 12, 8, C.note3); R(203, 67, 7, 1, '#4f8a55');
-    R(222, 43, 2, 2, C.teal); R(234, 45, 2, 2, '#f6d365'); R(228, 57, 2, 2, C.red);
-  }
-
   function drawClock(d) {
-    const cx = 296, cy = 30;
+    const cx = 287, cy = 90;
     R(cx - 9, cy - 7, 18, 14, C.woodDark); R(cx - 7, cy - 9, 14, 18, C.woodDark);
     R(cx - 8, cy - 6, 16, 12, C.white); R(cx - 6, cy - 8, 12, 16, C.white);
     R(cx - 1, cy - 7, 2, 1, C.greyDark); R(cx - 1, cy + 6, 2, 1, C.greyDark);
@@ -374,58 +369,69 @@ export function createScene(canvas, hooks = {}) {
     for (let i = 0; i <= n; i++) R(x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n, 1, 1, c);
   }
 
+  // low shelf with three doors: About me, Projects, Contact
   function drawShelf() {
-    const x = 270, y = 52, w = 46, h = 96;
-    R(x, y, w, h, C.woodDark); R(x + 2, y + 2, w - 4, h - 4, '#2a1a12');
-    R(x, y, w, 2, C.woodLight);
-    const shelves = [y + 30, y + 60, y + 90];
-    for (const sy of shelves) R(x + 2, sy, w - 4, 3, C.wood);
-    const books = [
-      ['#e05a5a', 8], ['#f6d365', 7], ['#2bbecb', 9], ['#8a7bd8', 6], ['#e9edf5', 8], ['#4caf6a', 7],
-      ['#e48a5b', 9], ['#5b8def', 6], ['#ff8fab', 8],
-    ];
-    // top shelf: books
-    let bx = x + 3;
-    for (let i = 0; i < 6; i++) {
-      const [c, bw] = [books[i][0], 4 + (i % 3)];
-      const bh = 18 + ((i * 5) % 8);
-      R(bx, y + 30 - bh, bw, bh, c); R(bx, y + 30 - bh + 3, bw, 1, '#00000033');
-      bx += bw + 1;
+    const { x, y } = SHELF;
+    // on top: a few books, a trophy, the game controller
+    const books = [['#e05a5a', 8], ['#f6d365', 7], ['#2bbecb', 9], ['#8a7bd8', 6], ['#e9edf5', 8]];
+    let bx = x + 2;
+    for (const [c, bh] of books) { R(bx, y - bh, 3, bh, c); R(bx, y - bh + 2, 3, 1, '#00000033'); bx += 4; }
+    R(x + 23, y - 7, 6, 4, '#f2c14e'); R(x + 25, y - 3, 2, 2, '#c9972c'); R(x + 23, y - 1, 6, 1, '#6b4430');
+    R(x + 30, y - 4, 7, 4, '#3c4460'); R(x + 31, y - 3, 1, 1, C.teal); R(x + 35, y - 3, 1, 1, C.red);
+    // carcass
+    R(x, y, 38, 32, C.woodDark); R(x, y, 38, 1, C.woodLight);
+    R(x + 1, y + 32, 3, 2, C.woodDeep); R(x + 34, y + 32, 3, 2, C.woodDeep);
+    const ring = s.t < s.ringUntil;
+    for (let col = 0; col < 3; col++) {
+      const cx = x + 2 + col * 12;
+      R(cx, y + 2, 10, 13, '#2a1a12'); R(cx, y + 17, 10, 13, '#2a1a12'); R(cx, y + 15, 10, 2, C.wood);
+      if (col === 0) { // about: a polaroid of Topz, and a stack of books
+        R(cx + 2, y + 4, 7, 9, C.paper); R(cx + 3, y + 5, 5, 5, '#6fa3c7');
+        R(cx + 4, y + 6, 3, 2, C.skin); R(cx + 4, y + 5, 3, 1, C.hair); R(cx + 3, y + 8, 5, 2, C.hoodie);
+        R(cx + 1, y + 20, 2, 10, '#e05a5a'); R(cx + 3, y + 22, 2, 8, '#2bbecb'); R(cx + 5, y + 19, 2, 11, '#f6d365'); R(cx + 7, y + 23, 2, 7, '#4caf6a');
+      } else if (col === 1) { // projects: binders and folders
+        R(cx + 1, y + 5, 2, 10, '#2bbecb'); R(cx + 4, y + 4, 2, 11, '#8a7bd8'); R(cx + 7, y + 6, 2, 9, '#e48a5b');
+        R(cx + 2, y + 8, 1, 2, '#ffffff'); R(cx + 5, y + 7, 1, 2, '#ffffff'); R(cx + 8, y + 9, 1, 2, '#ffffff');
+        R(cx + 1, y + 28, 8, 2, '#f6d365'); R(cx + 1, y + 26, 8, 2, '#4caf6a'); R(cx + 2, y + 24, 7, 2, '#f6d365'); R(cx + 1, y + 23, 3, 1, '#c9a227');
+      } else { // contact: the rotary phone, and a pile of letters
+        const jx = ring ? (Math.floor(s.t * 30) % 2 ? 1 : 0) : 0;
+        R(cx + 1 + jx, y + 10, 8, 5, '#eef1f6'); R(cx + 1 + jx, y + 14, 8, 1, '#8d93a3');
+        R(cx + 3 + jx, y + 11, 3, 3, '#ffffff'); R(cx + 4 + jx, y + 12, 1, 1, '#b7bdc9');
+        R(cx + jx, y + (ring ? 7 : 8), 10, 2, '#8d93a3');
+        R(cx + 1, y + 24, 8, 5, '#f4f6fb'); R(cx + 1, y + 24, 8, 1, '#c9ced8'); R(cx + 2, y + 25, 2, 1, '#9aa3b5'); R(cx + 4, y + 26, 2, 1, '#9aa3b5'); R(cx + 7, y + 25, 1, 2, C.red);
+        R(cx + 2, y + 22, 7, 2, '#efe3c2');
+      }
+      // the door swings open towards its hinge on the left
+      const dw = Math.round(10 * (1 - s.doors[col]));
+      const rattle = col === 2 && ring && dw > 8 ? (Math.floor(s.t * 24) % 2) : 0;
+      if (dw > 1) {
+        const dx = cx + rattle;
+        R(dx, y + 2, dw, 28, C.wood); R(dx, y + 2, dw, 1, C.woodLight);
+        R(dx + 1, y + 4, dw - 2, 11, C.woodLight); R(dx + 2, y + 5, Math.max(0, dw - 4), 9, C.wood);
+        R(dx + 1, y + 17, dw - 2, 11, C.woodLight); R(dx + 2, y + 18, Math.max(0, dw - 4), 9, C.wood);
+        R(dx + dw - 2, y + 15, 1, 2, '#f2c14e'); // knob
+        if (dw >= 9) { // a little picture on each door says what's behind it
+          const ix = dx + 2, iy = y + 7;
+          if (col === 0) { R(ix + 2, iy, 2, 2, '#f4f6fb'); R(ix + 1, iy + 2, 4, 3, '#f4f6fb'); }
+          else if (col === 1) { R(ix, iy + 1, 6, 4, '#f6d365'); R(ix, iy, 3, 1, '#f6d365'); }
+          else { R(ix, iy, 6, 4, '#f4f6fb'); R(ix + 1, iy + 1, 1, 1, '#9aa3b5'); R(ix + 2, iy + 2, 2, 1, '#9aa3b5'); R(ix + 4, iy + 1, 1, 1, '#9aa3b5'); }
+        }
+      } else R(cx, y + 2, 1, 28, C.woodLight);
     }
-    // little trophy
-    R(bx + 3, y + 20, 6, 4, '#f2c14e'); R(bx + 5, y + 24, 2, 3, '#c9972c'); R(bx + 3, y + 27, 6, 3, '#6b4430');
-    // middle shelf: leaning books + game controller
-    bx = x + 3;
-    for (let i = 6; i < 9; i++) { R(bx, y + 60 - 20, 5, 20, books[i][0]); bx += 6; }
-    R(x + 23, y + 54, 16, 6, '#3c4460'); R(x + 25, y + 53, 4, 2, '#3c4460'); R(x + 33, y + 53, 4, 2, '#3c4460');
-    R(x + 26, y + 56, 1, 1, C.teal); R(x + 25, y + 57, 3, 1, C.teal); R(x + 26, y + 58, 1, 1, C.teal);
-    R(x + 34, y + 56, 1, 1, C.red); R(x + 36, y + 57, 1, 1, '#f6d365');
-    // bottom shelf: boxes / tech
-    R(x + 4, y + 72, 16, 18, '#3a3f58'); R(x + 6, y + 75, 12, 2, C.teal);
-    R(x + 23, y + 78, 18, 12, '#5e3b28'); R(x + 23, y + 78, 18, 2, '#7b4e35');
-    R(x + 29, y + 82, 6, 1, '#c9a27a');
+    if (ring) { // ring ring
+      const k = Math.floor(s.t * 6) % 2;
+      R(x + 39 + k, y + 6, 2, 1, '#ffffff'); R(x + 40 + k, y + 9, 2, 1, '#ffffff');
+    }
+  }
+  function openShelf(col) {
+    s.doorsTarget[col] = 1;
+    s.doorsCloseAt[col] = s.t + 2.6;
+    if (col === 2) s.ringUntil = 0;
+    setTimeout(() => hooks.open?.(SHELF_COLS[col]), 380);
   }
 
-  function drawCabinet(d) {
-    R(18, 116, 42, 32, C.wood); R(18, 116, 42, 2, C.woodLight);
-    R(20, 120, 38, 12, C.woodDark); R(20, 134, 38, 12, C.woodDark);
-    R(36, 125, 6, 2, '#d3b38a'); R(36, 139, 6, 2, '#d3b38a');
-    R(20, 148, 3, 4, C.woodDeep); R(55, 148, 3, 4, C.woodDeep);
-    // rotary phone
-    const ring = s.t < s.ringUntil;
-    const jx = ring ? (Math.floor(s.t * 30) % 2 ? 1 : -1) : 0;
-    const px = 28 + jx, py = 104;
-    R(px + 2, py + 6, 18, 6, '#eef1f6'); R(px, py + 9, 22, 3, '#8d93a3');
-    R(px + 4, py + 4, 14, 3, '#eef1f6');
-    R(px + 7, py + 6, 8, 5, '#ffffff'); R(px + 9, py + 7, 4, 3, '#b7bdc9');
-    R(px + 1, py + (ring ? -1 : 1), 20, 3, '#8d93a3');
-    R(px, py + (ring ? 0 : 2), 4, 4, '#8d93a3'); R(px + 18, py + (ring ? 0 : 2), 4, 4, '#8d93a3');
-    if (ring) {
-      const k = Math.floor(s.t * 6) % 2;
-      R(px - 4 - k, py + 2, 2, 1, '#ffffff'); R(px - 5 - k, py + 5, 2, 1, '#ffffff');
-      R(px + 24 + k, py + 2, 2, 1, '#ffffff'); R(px + 25 + k, py + 5, 2, 1, '#ffffff');
-    }
-    // dog bed (back half; the front lip is drawn after the dog)
+  // Mochi's bed (back half; the front lip is drawn after the dog)
+  function drawBedBack() {
     R(64, 150, 34, 4, '#8d93a3'); R(66, 152, 30, 6, '#b7bdc9'); R(70, 154, 22, 3, '#dfe3ea');
   }
   function drawBedFront() {
@@ -434,36 +440,54 @@ export function createScene(canvas, hooks = {}) {
 
   function drawMonitors(dl) {
     const scroll = Math.floor(s.t * 3);
-    // left: code editor
-    let x = 128, y = 74, w = 38, h = 28;
+    // wide monitor: code editor with a terminal on the side
+    let x = 88, y = 76, w = 88, h = 28;
     R(x, y, w, h, '#0b0d18'); R(x + 2, y + 2, w - 4, h - 5, '#13172a');
-    R(x + 2, y + 2, 5, h - 5, '#0f1222');
+    R(x + 2, y + 2, w - 4, 2, '#1b2038'); R(x + 9, y + 2, 14, 2, '#2a3150'); R(x + 24, y + 2, 12, 2, '#20253e');
+    R(x + 2, y + 4, 6, h - 7, '#0f1222');
     const cols = ['#7ff3ff', '#f6d365', '#ff8fab', '#9be7a0', '#c3a6ff', '#9aa3b5'];
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 6; i++) {
       const n = i + scroll;
       const ind = (n * 7) % 4 * 2;
-      const len = 6 + ((n * 13) % 16);
-      R(x + 3, y + 4 + i * 3, 2, 1, '#3a4160');
-      R(x + 9 + ind, y + 4 + i * 3, Math.min(len, w - 13 - ind), 1, cols[(n * 5) % cols.length]);
+      const len = 8 + ((n * 13) % 24);
+      R(x + 3, y + 6 + i * 3, 3, 1, '#3a4160');
+      R(x + 10 + ind, y + 6 + i * 3, Math.min(len, 44 - ind), 1, cols[(n * 5) % cols.length]);
     }
-    if (Math.floor(s.t * 2) % 2) R(x + 9, y + 22, 1, 2, '#ffffff');
-    R(x + 17, y + h, 4, 6, '#0b0d18'); R(x + 12, y + h + 5, 14, 2, '#1a1d2b');
-    // right: website mockup
-    x = 174; w = 38;
+    if (Math.floor(s.t * 2) % 2) R(x + 10, y + 21, 1, 2, '#ffffff');
+    // terminal pane
+    const tx = x + w - 30;
+    R(tx, y + 4, 28, h - 7, '#090b14'); R(tx, y + 4, 28, 1, '#20253e');
+    for (let i = 0; i < 5; i++) {
+      const n = i + Math.floor(s.t * 1.2);
+      R(tx + 2, y + 7 + i * 3, 2, 1, '#5fe08a');
+      R(tx + 5, y + 7 + i * 3, 6 + ((n * 11) % 15), 1, i === 4 ? '#5fe08a' : '#7c8597');
+    }
+    R(x + w / 2 - 2, y + h, 4, 6, '#0b0d18'); R(x + w / 2 - 9, y + h + 4, 18, 2, '#1a1d2b');
+    // portrait monitor: a website, scrolling
+    x = 182; y = 66; w = 30; h = 38;
     R(x, y, w, h, '#0b0d18'); R(x + 2, y + 2, w - 4, h - 5, '#f4f6fb');
-    R(x + 2, y + 2, w - 4, 3, C.teal);
-    R(x + 4, y + 7, 14, 2, '#2b3245'); R(x + 4, y + 10, 18, 1, '#9aa3b5'); R(x + 4, y + 12, 12, 1, '#9aa3b5');
-    R(x + 4, y + 15, 9, 3, C.teal);
-    R(x + 23, y + 7, 11, 11, '#8a7bd8'); R(x + 25, y + 13, 7, 5, '#c3a6ff');
-    // a cursor wandering about the page
-    const cx = x + 8 + Math.round((Math.sin(s.t * 0.7) + 1) * 11), cy = y + 8 + Math.round((Math.sin(s.t * 1.1) + 1) * 5);
+    ctx.save(); ctx.beginPath(); ctx.rect(x + 2, y + 5, w - 4, h - 8); ctx.clip();
+    const off = reduced ? 0 : Math.floor((s.t * 4) % 46);
+    const py = y + 6 - off;
+    for (const k of [0, 46]) {
+      const by = py + k;
+      R(x + 4, by + 1, 14, 2, '#2b3245'); R(x + 4, by + 4, 20, 1, '#9aa3b5'); R(x + 4, by + 6, 16, 1, '#9aa3b5');
+      R(x + 4, by + 9, 9, 3, C.teal);
+      R(x + 4, by + 14, 22, 10, '#8a7bd8'); R(x + 6, by + 19, 10, 5, '#c3a6ff');
+      R(x + 4, by + 27, 10, 8, '#e9edf5'); R(x + 16, by + 27, 10, 8, '#e9edf5');
+      R(x + 5, by + 28, 8, 3, '#f6d365'); R(x + 17, by + 28, 8, 3, '#ff8fab');
+      R(x + 4, by + 38, 22, 5, '#2b3245');
+    }
+    ctx.restore();
+    R(x + 2, y + 2, w - 4, 3, C.teal); // sticky nav bar
+    const cx = x + 6 + Math.round((Math.sin(s.t * 0.7) + 1) * 8), cy = y + 10 + Math.round((Math.sin(s.t * 1.1) + 1) * 10);
     R(cx, cy, 1, 3, '#15121c'); R(cx + 1, cy + 1, 1, 1, '#15121c');
-    R(x + 17, y + h, 4, 6, '#0b0d18'); R(x + 12, y + h + 5, 14, 2, '#1a1d2b');
+    R(x + w / 2 - 2, y + h, 4, 6, '#0b0d18'); R(x + w / 2 - 7, y + h + 4, 14, 2, '#1a1d2b');
   }
 
   const RGB = ['#2bbecb', '#ff6f91', '#9be7a0', '#c3a6ff', '#f6d365'];
   function drawPC() {
-    const x = 218, y = 72;
+    const x = 220, y = 72;
     R(x, y, 20, 38, '#0b0d18'); R(x + 1, y + 1, 18, 36, '#14172a');
     R(x + 3, y + 3, 12, 32, '#0d1020');
     const col = s.rgbMode === RGB.length ? RGB[Math.floor(s.t * 2) % RGB.length] : RGB[s.rgbMode];
@@ -481,25 +505,28 @@ export function createScene(canvas, hooks = {}) {
   }
 
   function drawDesk(dl) {
-    R(96, 110, 148, 4, C.woodLight); R(96, 110, 148, 1, '#c48a60');
-    R(96, 114, 148, 6, C.wood); R(96, 119, 148, 1, C.woodDark);
-    R(100, 120, 6, 34, C.woodDark); R(234, 120, 6, 34, C.woodDark);
-    R(106, 120, 2, 30, C.woodDeep); R(232, 120, 2, 30, C.woodDeep);
+    // one long desk across the room
+    R(30, 110, 260, 4, C.woodLight); R(30, 110, 260, 1, '#c48a60');
+    R(30, 114, 260, 6, C.wood); R(30, 119, 260, 1, C.woodDark);
+    R(34, 120, 6, 18, C.woodDark); R(280, 120, 6, 18, C.woodDark);
+    R(40, 120, 2, 15, C.woodDeep); R(278, 120, 2, 15, C.woodDeep);
     drawMonitors(dl);
     s.pcColor = drawPC();
-    // water bottle, in front of the right monitor (unless Mark is drinking from it)
+    // keyboard
+    R(116, 107, 34, 3, '#2b2f40'); for (let k = 118; k < 148; k += 3) R(k, 108, 2, 1, '#4a5070');
+    // water bottle, between the monitors (unless Topz is drinking from it)
     if (s.t >= s.drinkUntil) {
-      R(196, 100, 4, 10, '#cfe4ea'); R(197, 103, 2, 6, '#9fc9d3'); R(196, 98, 4, 2, '#8a90a0'); R(196, 100, 1, 10, '#eef7fa');
+      R(177, 100, 4, 10, '#cfe4ea'); R(178, 103, 2, 6, '#9fc9d3'); R(177, 98, 4, 2, '#8a90a0'); R(177, 100, 1, 10, '#eef7fa');
     }
-    // lamp, far left, leaning over the desk
-    R(99, 107, 12, 3, '#3a3f58'); R(104, 90, 2, 17, '#3a3f58');
-    R(104, 88, 9, 2, '#3a3f58'); R(110, 84, 10, 5, C.teal); R(111, 89, 8, 1, '#fff6c8');
+    // desk lamp on the left, head tipped over the mug
+    R(46, 107, 12, 3, '#3a3f58'); R(51, 86, 2, 21, '#3a3f58');
+    R(51, 84, 10, 2, '#3a3f58'); R(58, 80, 12, 5, C.teal); R(59, 85, 10, 1, '#fff6c8');
     // mug with steam
-    R(114, 102, 8, 8, C.white); R(122, 104, 2, 4, C.white);
-    R(115, 104, 6, 1, '#2b3245'); R(115, 106, 4, 1, C.teal); R(115, 108, 6, 1, '#2b3245');
+    R(64, 102, 8, 8, C.white); R(72, 104, 2, 4, C.white);
+    R(65, 104, 6, 1, '#2b3245'); R(65, 106, 4, 1, C.teal); R(65, 108, 6, 1, '#2b3245');
     if (!reduced) for (let i = 0; i < 3; i++) {
       const k = (s.t * 6 + i * 3) % 9;
-      R(116 + (Math.floor(k) % 2) + i, 100 - k, 1, 1, '#ffffff55');
+      R(66 + (Math.floor(k) % 2) + i, 100 - k, 1, 1, '#ffffff55');
     }
   }
 
@@ -536,10 +563,22 @@ export function createScene(canvas, hooks = {}) {
     const tap = !stretching && !drinking && Math.floor(s.t * 6) % 2;
     const look = drinking ? 0 : s.t % 14 > 9 ? 1 : 0; // glances at the right monitor now and then
     const sw = swivel();
+    // Topz is drawn in his old spot and shifted: in front of the desk, on his rolling chair
+    const roll = Math.round(s.chair.x);
+    ctx.save();
+    ctx.translate(-30 + roll, 16);
 
-    // star base and gas lift don't turn
+    // legs and sneakers, under the seat
+    const tapFoot = s.music && Math.floor(s.t * 4) % 2 ? 1 : 0;
+    R(157, 132, 6, 8, '#2c3a5a'); R(157, 132, 1, 8, '#1f2a44');
+    R(177, 132, 6, 8, '#2c3a5a'); R(182, 132, 1, 8, '#1f2a44');
+    R(156, 139, 8, 3, '#e9edf5'); R(156, 141, 8, 1, '#9aa1b0'); R(157, 139, 3, 1, '#ffffff');
+    R(176, 139 - tapFoot, 8, 3, '#e9edf5'); R(176, 141 - tapFoot, 8, 1, '#9aa1b0'); R(177, 139 - tapFoot, 3, 1, '#ffffff');
+    // star base and gas lift don't turn; the wheels spin while the chair rolls
     R(168, 132, 4, 12, '#2b2f40');
-    R(154, 144, 32, 2, '#2b2f40'); R(152, 146, 3, 3, '#0b0c14'); R(185, 146, 3, 3, '#0b0c14'); R(168, 146, 4, 3, '#0b0c14');
+    R(154, 144, 32, 2, '#2b2f40');
+    const spin = Math.abs(s.chair.tx - s.chair.x) > 0.3 ? Math.floor(s.t * 12) % 2 : 0;
+    for (const wx of [152, 168, 185]) { R(wx, 146, 3, 3, '#0b0c14'); R(wx + spin, 147, 1, 1, '#3a3f58'); }
 
     ctx.save();
     ctx.translate(sw, 0);
@@ -561,7 +600,11 @@ export function createScene(canvas, hooks = {}) {
     R(161, 80, 18, 7, C.hood); R(163, 79, 14, 2, C.hoodieDark); R(164, 86, 12, 2, C.hood);
     const nod = s.music && !drinking && Math.floor(s.t * 4) % 2 ? 1 : 0;
     const tilt = drinking ? -1 : 0; // head tips back to drink
-    sprite(HEAD_BACK, headBackPal, 162 + look, 64 + nod + tilt);
+    // a soft outline so the dark hair reads against the dark monitor behind it
+    const hx = 162 + look, hy = 64 + nod + tilt;
+    const rim = { h: '#2c3552', H: '#2c3552', s: '#2c3552', S: '#2c3552' };
+    for (const [ox, oy] of [[-1, 0], [1, 0], [0, -1]]) sprite(HEAD_BACK.slice(0, 13), rim, hx + ox, hy + oy);
+    sprite(HEAD_BACK, headBackPal, hx, hy);
     R(166 + look, 64 + nod + tilt, 8, 1, '#3a3456');
     if (drinking) drawSip();
 
@@ -573,6 +616,9 @@ export function createScene(canvas, hooks = {}) {
     R(150, 128, 40, 4, C.chair);
     drawHat();
     ctx.restore();
+    ctx.restore();
+    Object.assign(box('mark'), { x: 116 + roll, y: 78 });
+    Object.assign(box('hat'), { x: 127 + roll, y: 118 });
   }
 
   // right arm up, bottle tipped to his mouth
@@ -603,12 +649,12 @@ export function createScene(canvas, hooks = {}) {
     s.drinkStart = s.t;
     s.drinkUntil = s.t + 3.2;
     s.nextDrink = s.t + rand(40, 70);
-    hooks.say?.(DRINK_LINES[drinkIdx++ % DRINK_LINES.length], 170, 50);
+    hooks.say?.(DRINK_LINES[drinkIdx++ % DRINK_LINES.length], 140 + s.chair.x, 70);
   }
 
 
   // ---------- ceiling light bulb ----------
-  const BULB_X = 52, BULB_Y = 15; // centre of the glass
+  const BULB_X = 94, BULB_Y = 15; // centre of the glass
   function drawBulb() {
     const g = s.bulbGlow;
     // cord from the ceiling, a little ceiling rose, and the socket
@@ -659,7 +705,7 @@ export function createScene(canvas, hooks = {}) {
       ctx.globalCompositeOperation = 'screen';
       // desk lamp pool
       ctx.fillStyle = `rgba(110,80,25,${0.38 * a})`;
-      ctx.beginPath(); ctx.moveTo(110, 90); ctx.lineTo(119, 90); ctx.lineTo(132, 110); ctx.lineTo(100, 110); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(59, 86); ctx.lineTo(69, 86); ctx.lineTo(82, 110); ctx.lineTo(48, 110); ctx.closePath(); ctx.fill();
       // soft, stepped glow around each screen and the PC
       const glow = (x, y, w, h, rgb, k) => {
         for (let i = 3; i >= 1; i--) {
@@ -667,13 +713,13 @@ export function createScene(canvas, hooks = {}) {
           ctx.fillRect(x - i * 2, y - i * 2, w + i * 4, h + i * 4);
         }
       };
-      glow(128, 74, 38, 25, '30,90,110', 0.12);
-      glow(174, 74, 38, 25, '60,90,110', 0.12);
+      glow(88, 76, 88, 26, '30,90,110', 0.12);
+      glow(182, 66, 30, 36, '60,90,110', 0.12);
       const pc = s.pcColor || C.teal;
       const n = parseInt(pc.slice(1), 16);
-      glow(218, 72, 20, 38, `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`, 0.07);
+      glow(220, 72, 20, 38, `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`, 0.07);
       ctx.fillStyle = `rgba(60,150,160,${0.4 * a})`;
-      ctx.fillRect(166, 64, 8, 1);
+      ctx.fillRect(136 + Math.round(s.chair.x), 80, 8, 1);
       ctx.restore();
     }
   }
@@ -684,27 +730,28 @@ export function createScene(canvas, hooks = {}) {
     { wrap: '#e48a5b', dark: '#9c5232', saya: '#3a2418', guard: '#9aa3b5' },
     { wrap: '#4caf6a', dark: '#2f7a48', saya: '#14161f', guard: '#8a6a3a' },
   ];
+  const KX = 132, KY = 40; // rack under the neon sign
   function drawKatanas() {
-    for (const bx of [202, 244]) { R(bx, 8, 5, 28, C.woodDark); R(bx, 8, 5, 1, C.woodLight); }
+    for (const bx of [KX + 6, KX + 48]) { R(bx, KY, 5, 28, C.woodDark); R(bx, KY, 5, 1, C.woodLight); }
     KATANAS.forEach((k, i) => {
-      const y = 12 + i * 8;
+      const y = KY + 4 + i * 8;
       // handle with a criss-cross wrap
-      R(196, y, 14, 3, k.dark);
-      for (let x = 196; x < 210; x += 3) R(x, y + 1, 2, 1, k.wrap);
-      R(195, y, 1, 3, k.guard);
+      R(KX, y, 14, 3, k.dark);
+      for (let x = KX; x < KX + 14; x += 3) R(x, y + 1, 2, 1, k.wrap);
+      R(KX - 1, y, 1, 3, k.guard);
       // guard, collar, scabbard, end cap
-      R(210, y - 1, 2, 5, k.guard);
-      R(212, y, 2, 3, k.guard);
-      R(214, y, 40, 3, k.saya); R(214, y, 40, 1, '#ffffff22');
-      R(254, y, 2, 3, k.guard);
+      R(KX + 14, y - 1, 2, 5, k.guard);
+      R(KX + 16, y, 2, 3, k.guard);
+      R(KX + 18, y, 40, 3, k.saya); R(KX + 18, y, 40, 1, '#ffffff22');
+      R(KX + 58, y, 2, 3, k.guard);
       // rack pegs in front
-      R(203, y + 3, 3, 1, C.woodLight); R(245, y + 3, 3, 1, C.woodLight);
+      R(KX + 7, y + 3, 3, 1, C.woodLight); R(KX + 49, y + 3, 3, 1, C.woodLight);
     });
   }
 
   // an original jukebox: arch top, spinning record, equaliser grille
   function drawJukebox() {
-    const x = 243, y = 110, playing = s.music;
+    const x = 274, y = 122, playing = s.music;
     const hue = playing ? RGB[Math.floor(s.t * 3) % RGB.length] : C.tealDark;
     R(x + 5, y, 14, 1, C.woodDark); R(x + 3, y + 1, 18, 2, C.woodDark); R(x + 1, y + 3, 22, 2, C.woodDark);
     R(x, y + 5, 24, 33, C.woodDark);
@@ -734,7 +781,7 @@ export function createScene(canvas, hooks = {}) {
 
   function drawNotes(dt) {
     if (s.music && !reduced && Math.random() < dt * 1.6)
-      s.notes.push({ x: 250 + rand(0, 10), y: 112, life: 2.4, c: RGB[Math.floor(rand(0, RGB.length))] });
+      s.notes.push({ x: 281 + rand(0, 10), y: 124, life: 2.4, c: RGB[Math.floor(rand(0, RGB.length))] });
     s.notes = s.notes.filter((n) => (n.life -= dt) > 0);
     for (const n of s.notes) {
       n.y -= dt * 9; n.x += Math.sin(n.life * 4) * dt * 6;
@@ -758,18 +805,18 @@ export function createScene(canvas, hooks = {}) {
 
   // ---------- aircon ----------
   function drawAircon() {
-    const x = 92, y = 5;
-    R(x, y, 40, 13, '#eef1f6'); R(x, y, 40, 1, '#ffffff'); R(x, y + 12, 40, 1, '#9aa1b0');
-    R(x + 2, y + 9, 36, 2, '#c9ced8');
+    const x = 134, y = 4, w = 56;
+    R(x, y, w, 14, '#eef1f6'); R(x, y, w, 1, '#ffffff'); R(x, y + 13, w, 1, '#9aa1b0');
+    R(x + 2, y + 10, w - 4, 2, '#c9ced8');
     const flap = s.ac && !reduced ? (Math.floor(s.t * 0.8) % 2) : 0;
-    R(x + 3, y + 10 + flap, 34, 1, '#8d93a3');
-    R(x + 34, y + 3, 2, 2, s.ac ? '#5fe08a' : '#6b7183');
-    R(x + 4, y + 3, 10, 1, '#d4d8e0');
+    R(x + 3, y + 11 + flap, w - 6, 1, '#8d93a3');
+    R(x + w - 6, y + 3, 2, 2, s.ac ? '#5fe08a' : '#6b7183');
+    R(x + 4, y + 3, 12, 1, '#d4d8e0'); R(x + 4, y + 5, 8, 1, '#d4d8e0');
     if (s.ac && !reduced) {
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 7; i++) {
         const k = (s.t * 6 + i * 4) % 14;
-        const ax = x + 6 + i * 7 + Math.round(Math.sin(s.t * 2 + i) * 1);
-        R(ax, y + 14 + k, 3, 1, `rgba(220,235,255,${0.35 * (1 - k / 14)})`);
+        const ax = x + 5 + i * 7 + Math.round(Math.sin(s.t * 2 + i) * 1);
+        R(ax, y + 15 + k, 3, 1, `rgba(220,235,255,${0.35 * (1 - k / 14)})`);
       }
     }
   }
@@ -790,9 +837,9 @@ export function createScene(canvas, hooks = {}) {
     // cockroach: dashes across the floor, stops, dashes again
     const r = s.roach;
     if (r.state === 'gone') {
-      if (s.t > r.until) { r.x = Math.random() < 0.5 ? -6 : W + 6; r.y = rand(148, 176); r.state = 'run'; r.flee = false; r.tx = rand(30, 290); r.ty = rand(148, 176); }
+      if (s.t > r.until) { r.x = Math.random() < 0.5 ? -6 : W + 6; r.y = rand(132, 176); r.state = 'run'; r.flee = false; r.tx = rand(30, 290); r.ty = rand(132, 176); }
     } else if (r.state === 'wait') {
-      if (s.t > r.until) { r.state = 'run'; r.tx = rand(10, 310); r.ty = rand(146, 176); }
+      if (s.t > r.until) { r.state = 'run'; r.tx = rand(10, 310); r.ty = rand(132, 176); }
     } else {
       const sp = r.flee ? 110 : 38;
       const dx = r.tx - r.x, dy = r.ty - r.y, dist = Math.hypot(dx, dy);
@@ -807,7 +854,7 @@ export function createScene(canvas, hooks = {}) {
     const msp = m.fast ? 70 : 40;
     if (m.state === 'home' && s.t > m.until) { m.state = 'peek'; m.until = s.t + 1.6; m.x = 82; }
     else if (m.state === 'peek' && s.t > m.until) {
-      if (Math.random() < 0.65) { m.state = 'run'; m.tx = rand(108, 150); m.dir = 1; m.fast = false; }
+      if (Math.random() < 0.65) { m.state = 'run'; m.tx = rand(90, 118); m.dir = 1; m.fast = false; }
       else { m.state = 'home'; m.until = s.t + rand(8, 18); }
     } else if (m.state === 'run' || m.state === 'back') {
       const d = m.tx - m.x;
@@ -825,7 +872,7 @@ export function createScene(canvas, hooks = {}) {
     } else if (s.t > f.next) {
       const wet = s.weather === 'rain' || s.weather === 'storm';
       f.from = { x: f.x, y: f.y };
-      f.to = { x: Math.max(112, Math.min(222, f.x + rand(-28, 28))), y: rand(164, 170) };
+      f.to = { x: Math.max(88, Math.min(188, f.x + rand(-28, 28))), y: rand(166, 172) };
       f.hopAt = s.t;
       f.next = s.t + (wet ? rand(1.5, 4) : rand(4, 9));
     }
@@ -841,7 +888,7 @@ export function createScene(canvas, hooks = {}) {
     const z = s.lizard;
     if (z.state === 'freeze' && s.t > z.until) {
       z.state = 'crawl'; z.until = s.t + rand(0.5, 1.4);
-      z.tx = Math.max(4, Math.min(262, z.x + rand(-60, 60))); z.ty = Math.max(38, Math.min(128, z.y + rand(-14, 14)));
+      z.tx = Math.max(4, Math.min(310, z.x + rand(-60, 60))); z.ty = Math.max(20, Math.min(116, z.y + rand(-14, 14)));
     } else if (z.state === 'crawl') {
       const dx = z.tx - z.x, dy = z.ty - z.y, dist = Math.hypot(dx, dy), v = (z.fast ? 60 : 22) * dt;
       if (dist < v || s.t > z.until + 2) { z.state = 'freeze'; z.until = s.t + rand(1, 5); z.fast = false; }
@@ -851,15 +898,15 @@ export function createScene(canvas, hooks = {}) {
   }
 
   function drawMouseHole() {
-    R(77, 132, 4, 1, '#07070c'); R(76, 133, 6, 3, '#07070c'); R(76, 136, 6, 4, '#07070c');
+    R(77, 120, 4, 1, '#07070c'); R(76, 121, 6, 3, '#07070c'); R(76, 124, 6, 4, '#07070c');
   }
 
   function drawLizard() {
     const z = s.lizard, x = Math.round(z.x), y = Math.round(z.y), d = z.dir;
     const step = z.state === 'crawl' && Math.floor(s.t * 10) % 2;
-    const c = '#c9b98a', dk = '#8f7f58';
+    const c = '#5fbf6a', dk = '#3f8f4a';
     R(x, y, 6, 2, c);
-    R(d > 0 ? x + 6 : x - 2, y, 2, 2, '#d8c99a');
+    R(d > 0 ? x + 6 : x - 2, y, 2, 2, '#8be08f');
     R(d > 0 ? x + 7 : x - 2, y, 1, 1, '#2a2533');
     R(d > 0 ? x - 4 : x + 6, y + (step ? 0 : 1), 4, 1, dk);
     R(d > 0 ? x - 6 : x + 10, y + 1, 2, 1, dk);
@@ -868,7 +915,7 @@ export function createScene(canvas, hooks = {}) {
   }
 
   function drawSpider() {
-    const sp = s.spider, x = 86, y = Math.round(sp.y);
+    const sp = s.spider, x = 114, y = Math.round(sp.y);
     R(x + 1, 8, 1, y - 8, '#8d93a388');
     const k = Math.floor(s.t * 3) % 2;
     R(x, y, 3, 3, '#2a2533'); R(x + 1, y + 3, 1, 1, '#2a2533');
@@ -878,10 +925,11 @@ export function createScene(canvas, hooks = {}) {
     Object.assign(box('spider'), { x: x - 4, y: y - 3, w: 11, h: 9 });
   }
 
-  function drawFloorCritters() {
+  // back layer: things further from us than Topz's chair; front layer: closer
+  function drawFloorCritters(front) {
     // cockroach
     const r = s.roach;
-    if (r.state !== 'gone') {
+    if (r.state !== 'gone' && (r.y >= 158) === front) {
       const x = Math.round(r.x), y = Math.round(r.y), d = r.dir;
       const k = r.state === 'run' && Math.floor(s.t * 16) % 2;
       R(x, y, 5, 2, '#6b3a1e'); R(x + 1, y, 2, 1, '#8a4f2c');
@@ -889,12 +937,13 @@ export function createScene(canvas, hooks = {}) {
       R(d > 0 ? x + 6 : x - 2, y - 1, 1, 1, '#3a1e10'); R(d > 0 ? x + 7 : x - 3, y - 2, 1, 1, '#3a1e10');
       for (let i = 0; i < 3; i++) R(x + i * 2, (i + k) % 2 ? y + 2 : y - 1, 1, 1, '#3a1e10');
       Object.assign(box('roach'), { x: x - 4, y: y - 5, w: 14, h: 11, label: 'Cockroach' });
-    } else box('roach').x = -99;
-    // mouse
+    } else if (r.state === 'gone') box('roach').x = -99;
+    if (front) { drawFrog(); return; }
+    // mouse (stays by the wall, so always behind the chair)
     const m = s.mouse;
     if (m.state === 'home') box('mouse').x = -99;
     else {
-      const y = 137, d = m.state === 'peek' ? 1 : m.dir;
+      const y = 125, d = m.state === 'peek' ? 1 : m.dir;
       const x = Math.round(m.state === 'peek' ? 81 : m.x);
       const body = '#9aa1b0';
       if (m.state !== 'peek') {
@@ -907,7 +956,8 @@ export function createScene(canvas, hooks = {}) {
       R(d > 0 ? hx : hx + 1, y, 1, 1, '#e8b4bc'); R(d > 0 ? hx + 1 : hx, y + 1, 1, 1, '#0d0f1c');
       Object.assign(box('mouse'), { x: x - 4, y: y - 3, w: 14, h: 9, label: 'Mouse' });
     }
-    // frog
+  }
+  function drawFrog() {
     const f = s.frog;
     let fx = f.x, fy = f.y, air = false;
     if (f.from) {
@@ -938,7 +988,7 @@ export function createScene(canvas, hooks = {}) {
       f.next = s.t + 0.3; return true;
     }
     if (id === 'spider') {
-      const sp = s.spider; hooks.say?.(sayLine('spider'), 88, sp.y - 3);
+      const sp = s.spider; hooks.say?.(sayLine('spider'), 116, sp.y - 3);
       sp.state = 'move'; sp.ty = 12; sp.fast = true; return true;
     }
     if (id === 'lizard') {
@@ -948,17 +998,17 @@ export function createScene(canvas, hooks = {}) {
     }
     if (id === 'aircon') {
       s.ac = !s.ac;
-      hooks.say?.(s.ac ? 'Aircon on. The Iloilo heat stands no chance. ❄' : 'Aircon off. Saving on the electric bill.', 112, 22);
+      hooks.say?.(s.ac ? 'Aircon on. The Iloilo heat stands no chance. ❄' : 'Aircon off. Saving on the electric bill.', 162, 22);
       return true;
     }
     if (id === 'bulb') {
       s.bulb = !s.bulb;
       hooks.say?.(s.bulb ? ['Let there be light. 💡', 'Ahh, now I can see the bugs. Both kinds.', 'Lights on. Productivity +10.'][Math.floor(Math.random() * 3)]
-                         : ['Lights off. Monitor glow only.', 'Dark mode: room edition.', 'Saving electricity. And my eyes.'][Math.floor(Math.random() * 3)], 52, 26);
+                         : ['Lights off. Monitor glow only.', 'Dark mode: room edition.', 'Saving electricity. And my eyes.'][Math.floor(Math.random() * 3)], BULB_X, 26);
       return true;
     }
     if (id === 'hat') {
-      hooks.say?.(['My lucky straw hat.', 'Every adventure needs a hat.', 'Sun protection for the walk to 7-Eleven.'][Math.floor(Math.random() * 3)], 170, 96);
+      hooks.say?.(['My lucky straw hat.', 'Every adventure needs a hat.', 'Sun protection for the walk to 7-Eleven.'][Math.floor(Math.random() * 3)], 140 + s.chair.x, 112);
       return true;
     }
     return false;
@@ -1037,17 +1087,17 @@ export function createScene(canvas, hooks = {}) {
     c.target = 1;
     c.itemAt = s.t + 0.35;
     c.closeAt = s.t + 5;
-    for (let k = 0; k < 14; k++) c.sparks.push({ x: 283 + rand(-8, 8), y: 152, vx: rand(-14, 14), vy: rand(-30, -12), life: rand(0.6, 1.2) });
-    setTimeout(() => hooks.say?.(c.item.say, 283, 128), 380);
+    for (let k = 0; k < 14; k++) c.sparks.push({ x: 29 + rand(-8, 8), y: 150, vx: rand(-14, 14), vy: rand(-30, -12), life: rand(0.6, 1.2) });
+    setTimeout(() => hooks.say?.(c.item.say, 29, 126), 380);
     if (c.item.photo) setTimeout(() => hooks.photo?.(c.item), 1300);
-    if (c.item.name === 'bone') { const g = s.dog; g.state = 'walk'; g.target = 236; }
+    if (c.item.name === 'bone') { const g = s.dog; g.state = 'walk'; g.target = 46; }
   }
 
   function drawChest(dt) {
     const c = s.chest;
     if (c.target === 1 && s.t > c.closeAt) c.target = 0;
     c.open += (c.target - c.open) * Math.min(1, dt * 10);
-    const x = 270, y = 154;
+    const x = 16, y = 152;
     const open = c.open > 0.5;
     // rose-painted wood, silver bands with rivets, gold studs, heaped with coins
     const wood = '#a5636a', woodL = '#bb7a7f', woodD = '#7f474d', band = '#a9afbd', bandL = '#d4d8e0', rivet = '#6b7183';
@@ -1098,7 +1148,7 @@ export function createScene(canvas, hooks = {}) {
       p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 30 * dt;
       R(p.x, p.y, 1, 1, p.life > 0.4 ? '#fff3b0' : '#f2c14e');
     }
-    box('chest').y = open ? 138 : 140;
+    box('chest').y = open ? 136 : 138;
   }
   function drawDog() {
     const g = s.dog;
@@ -1143,6 +1193,14 @@ export function createScene(canvas, hooks = {}) {
     s.t += dt;
     updateCritters(dt);
     s.blinds += (s.blindsTarget - s.blinds) * Math.min(1, dt * 4);
+    // the chair rolls to a new spot now and then
+    const ch = s.chair;
+    if (!reduced && s.t > ch.next && s.t > s.drinkUntil) { ch.tx = Math.round(rand(-8, 8)); ch.next = s.t + rand(8, 16); }
+    ch.x += Math.sign(ch.tx - ch.x) * Math.min(Math.abs(ch.tx - ch.x), dt * 8);
+    for (let i = 0; i < 3; i++) {
+      if (s.doorsTarget[i] && s.t > s.doorsCloseAt[i]) s.doorsTarget[i] = 0;
+      s.doors[i] += (s.doorsTarget[i] - s.doors[i]) * Math.min(1, dt * (reduced ? 60 : 9));
+    }
     s.bulbGlow = reduced ? (s.bulb ? 1 : 0) : s.bulbGlow + ((s.bulb ? 1 : 0) - s.bulbGlow) * Math.min(1, dt * 8);
 
     if (s.t > s.nextBlink) { s.blinkUntil = s.t + 0.14; s.nextBlink = s.t + rand(2.5, 5.5); }
@@ -1163,7 +1221,7 @@ export function createScene(canvas, hooks = {}) {
     } else if (s.t > g.until) {
       g.state = 'walk';
       // from the bed: go somewhere. elsewhere: sometimes wander on, sometimes head home
-      g.target = g.x !== 70 && Math.random() < 0.45 ? 70 : Math.round(rand(110, 236));
+      g.target = g.x !== 70 && Math.random() < 0.45 ? 70 : Math.round(rand(46, 200));
     }
   }
 
@@ -1171,9 +1229,7 @@ export function createScene(canvas, hooks = {}) {
     const d = iloiloNow();
     const { light } = daylight(d);
     drawWall();
-    drawWindow(d);
-    drawFrames();
-    drawCork();
+    for (const win of WINDOWS) drawWindow(d, win);
     drawClock(d);
     drawKatanas();
     drawAircon();
@@ -1181,15 +1237,16 @@ export function createScene(canvas, hooks = {}) {
     drawLizard();
     drawFloor();
     drawMouseHole();
+    drawDesk(light);
     drawShelf();
     drawJukebox();
-    drawCabinet(d);
-    drawDesk(light);
-    drawMark();
+    drawBedBack();
     drawDog();
     drawBedFront();
     drawChest(1 / 60);
-    drawFloorCritters();
+    drawFloorCritters(false);
+    drawMark();
+    drawFloorCritters(true);
     drawSpider();
     drawLights(light);
     drawBulbGlow();
@@ -1211,8 +1268,8 @@ export function createScene(canvas, hooks = {}) {
 
   // ---------- input ----------
   function hit(x, y) {
-    // dog first: it walks in front of everything
-    const order = ['roach', 'mouse', 'frog', 'spider', 'lizard', 'chest', 'dog', 'contact', 'bottle', 'mug', 'hat', 'bulb', 'aircon', 'jukebox', 'katana', 'mark', 'pc', 'monitors', 'window', 'projects', 'about', 'shelf'];
+    // critters first: they wander in front of things
+    const order = ['roach', 'mouse', 'frog', 'spider', 'lizard', 'chest', 'dog', 'bottle', 'mug', 'hat', 'bulb', 'aircon', 'jukebox', 'about', 'projects', 'contact', 'shelf', 'katana', 'mark', 'pc', 'monitors', 'window', 'window2'];
     for (const id of order) {
       const o = objects.find((ob) => ob.id === id);
       if (x >= o.x && x < o.x + o.w && y >= o.y && y < o.y + o.h) return o;
@@ -1253,7 +1310,9 @@ export function createScene(canvas, hooks = {}) {
     if (!o) return;
     if (critterClick(o.id)) return;
     if (o.id === 'chest') { openChest(); return; }
-    if (o.id === 'window') { s.blindsTarget = s.blindsTarget ? 0 : 1; return; }
+    if (o.id === 'window' || o.id === 'window2') { s.blindsTarget = s.blindsTarget ? 0 : 1; return; }
+    const col = SHELF_COLS.indexOf(o.id);
+    if (col >= 0) { openShelf(col); return; }
     if (o.id === 'dog') {
       const g = s.dog;
       const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -1263,18 +1322,17 @@ export function createScene(canvas, hooks = {}) {
       return;
     }
     if (o.id === 'mark') {
-      hooks.say?.(markLine(), 170, 58);
+      hooks.say?.(markLine(), 140 + s.chair.x, 76);
       return;
     }
     if (o.id === 'shelf') {
-      hooks.say?.(['Half of these are manga. The other half are also manga.', 'That trophy? Office chair racing. Long story.', 'The controller is for "testing". Definitely testing.'][Math.floor(Math.random() * 3)], 292, 58);
+      hooks.say?.(['Half of these are manga. The other half are also manga.', 'That trophy? Office chair racing. Long story.', 'The controller is for "testing". Definitely testing.'][Math.floor(Math.random() * 3)], 241, 112);
       return;
     }
-    if (o.id === 'katana') { hooks.say?.(KATANA_LINES[katanaIdx++ % KATANA_LINES.length], 226, 40); return; }
+    if (o.id === 'katana') { hooks.say?.(KATANA_LINES[katanaIdx++ % KATANA_LINES.length], 162, 40); return; }
     if (o.id === 'bottle') { startDrink(); return; }
-    if (o.id === 'mug') { hooks.say?.('This MEETING should have been an EMAIL', 118, 96); return; }
+    if (o.id === 'mug') { hooks.say?.('This MEETING should have been an EMAIL', 68, 96); return; }
     if (o.id === 'pc') { s.rgbMode = (s.rgbMode + 1) % (RGB.length + 1); return; }
-    if (o.id === 'contact') s.ringUntil = 0;
     hooks.open?.(o.id === 'monitors' ? 'projects' : o.id);
   }
 

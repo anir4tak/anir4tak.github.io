@@ -26,7 +26,7 @@ function fit() {
   const wasPan = viewport.classList.contains('pan');
   viewport.classList.toggle('pan', pan);
   panHint.hidden = !pan;
-  if (pan && (!wasPan || !fit.done)) viewport.scrollLeft = 170 * scale - viewport.clientWidth / 2; // start on Mark
+  if (pan && (!wasPan || !fit.done)) viewport.scrollLeft = 140 * scale - viewport.clientWidth / 2; // start on Mark
   fit.done = true;
 }
 addEventListener('resize', () => { fit(); checkRotate(); });
