@@ -140,6 +140,7 @@ export function createScene(canvas, hooks = {}) {
     { id: 'mark', label: 'Mark', x: 146, y: 62, w: 48, h: 86 },
     { id: 'monitors', label: 'Projects · on screen', x: 126, y: 72, w: 88, h: 38 },
     { id: 'pc', label: 'PC · change the RGB', x: 216, y: 70, w: 24, h: 42 },
+    { id: 'mug', label: 'Mug · "This MEETING should have been an EMAIL"', x: 112, y: 98, w: 13, h: 13 },
     { id: 'dog', label: 'Mochi', x: 0, y: 0, w: 18, h: 14 },
   ];
   const dogBox = objects.find((o) => o.id === 'dog');
@@ -433,7 +434,8 @@ export function createScene(canvas, hooks = {}) {
     R(99, 107, 12, 3, '#3a3f58'); R(104, 90, 2, 17, '#3a3f58');
     R(104, 88, 9, 2, '#3a3f58'); R(110, 84, 10, 5, C.teal); R(111, 89, 8, 1, '#fff6c8');
     // mug with steam
-    R(114, 102, 8, 8, C.white); R(114, 104, 8, 2, C.teal); R(122, 104, 2, 4, C.white);
+    R(114, 102, 8, 8, C.white); R(122, 104, 2, 4, C.white);
+    R(115, 104, 6, 1, '#2b3245'); R(115, 106, 4, 1, C.teal); R(115, 108, 6, 1, '#2b3245');
     if (!reduced) for (let i = 0; i < 3; i++) {
       const k = (s.t * 6 + i * 3) % 9;
       R(116 + (Math.floor(k) % 2) + i, 100 - k, 1, 1, '#ffffff55');
@@ -628,7 +630,7 @@ export function createScene(canvas, hooks = {}) {
   // ---------- input ----------
   function hit(x, y) {
     // dog first: it walks in front of everything
-    const order = ['dog', 'contact', 'mark', 'pc', 'monitors', 'window', 'projects', 'about', 'skills'];
+    const order = ['dog', 'contact', 'mug', 'mark', 'pc', 'monitors', 'window', 'projects', 'about', 'skills'];
     for (const id of order) {
       const o = objects.find((ob) => ob.id === id);
       if (x >= o.x && x < o.x + o.w && y >= o.y && y < o.y + o.h) return o;
@@ -659,6 +661,7 @@ export function createScene(canvas, hooks = {}) {
       hooks.say?.(MARK_LINES[lineIdx++ % MARK_LINES.length], 170, 58);
       return;
     }
+    if (o.id === 'mug') { hooks.say?.('This MEETING should have been an EMAIL', 118, 96); return; }
     if (o.id === 'pc') { s.rgbMode = (s.rgbMode + 1) % (RGB.length + 1); return; }
     if (o.id === 'contact') s.ringUntil = 0;
     hooks.open?.(o.id === 'monitors' ? 'projects' : o.id);
