@@ -154,7 +154,7 @@ export function createScene(canvas, hooks = {}) {
     { id: 'window', label: 'Window · open/close the blind', x: 16, y: 26, w: 68, h: 70 },
     { id: 'projects', label: 'Projects', x: 90, y: 40, w: 56, h: 46 },
     { id: 'about', label: 'About me', x: 194, y: 38, w: 52, h: 38 },
-    { id: 'skills', label: 'Skills', x: 268, y: 50, w: 50, h: 98 },
+    { id: 'shelf', label: 'Bookshelf', x: 268, y: 50, w: 50, h: 98 },
     { id: 'jukebox', label: 'Jukebox · my Spotify playlists', x: 241, y: 108, w: 28, h: 42 },
     { id: 'katana', label: 'Katana rack', x: 193, y: 7, w: 66, h: 30 },
     { id: 'contact', label: 'Contact · the phone', x: 24, y: 100, w: 30, h: 18 },
@@ -1021,7 +1021,7 @@ export function createScene(canvas, hooks = {}) {
   // ---------- input ----------
   function hit(x, y) {
     // dog first: it walks in front of everything
-    const order = ['roach', 'mouse', 'frog', 'spider', 'lizard', 'dog', 'contact', 'bottle', 'mug', 'hat', 'aircon', 'jukebox', 'katana', 'mark', 'pc', 'monitors', 'window', 'projects', 'about', 'skills'];
+    const order = ['roach', 'mouse', 'frog', 'spider', 'lizard', 'dog', 'contact', 'bottle', 'mug', 'hat', 'aircon', 'jukebox', 'katana', 'mark', 'pc', 'monitors', 'window', 'projects', 'about', 'shelf'];
     for (const id of order) {
       const o = objects.find((ob) => ob.id === id);
       if (x >= o.x && x < o.x + o.w && y >= o.y && y < o.y + o.h) return o;
@@ -1072,6 +1072,10 @@ export function createScene(canvas, hooks = {}) {
     }
     if (o.id === 'mark') {
       hooks.say?.(markLine(), 170, 58);
+      return;
+    }
+    if (o.id === 'shelf') {
+      hooks.say?.(['Half of these are manga. The other half are also manga.', 'That trophy? Office chair racing. Long story.', 'The controller is for "testing". Definitely testing.'][Math.floor(Math.random() * 3)], 292, 58);
       return;
     }
     if (o.id === 'katana') { hooks.say?.(KATANA_LINES[katanaIdx++ % KATANA_LINES.length], 226, 40); return; }

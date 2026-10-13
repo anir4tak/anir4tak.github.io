@@ -15,17 +15,6 @@ export const ABOUT = [
   'Away from the desk I recharge with video games and time with family and friends. And Mochi, obviously.',
 ];
 
-export const SKILLS = [
-  { group: 'Tech stack', items: [
-    ['HTML', 'html'], ['CSS', 'css'], ['JavaScript', 'js'], ['PHP', 'php'],
-    ['Bootstrap', 'bootstrap'], ['jQuery', 'jquery'], ['Sass', 'sass'], ['Node.js', 'node'],
-  ] },
-  { group: 'Platform', items: [['WordPress', 'wp']] },
-  { group: 'Tools', items: [
-    ['Git', 'git'], ['GitHub', 'github'], ['Photoshop', 'ps'], ['Figma', 'figma'], ['Adobe XD', 'xd'], ['Bitbucket', 'bitbucket_new'],
-  ] },
-];
-
 export const PROJECTS = [
   { group: 'WordPress + Elementor', items: [
     ['Matthew Hussey', 'https://matthewhussey.com/', 'matthewhussey'],

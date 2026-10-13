@@ -72,6 +72,7 @@ main {
   background: var(--ink);
   color: #15121c;
   padding: 6px 10px;
+  width: max-content;
   max-width: min(320px, 80vw);
   white-space: normal;
   text-align: center;
@@ -176,13 +177,6 @@ main {
 .id-role { color: var(--teal-light); }
 .id-city { color: var(--muted); }
 
-.skills { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
-.skills li {
-  display: flex; align-items: center; gap: 10px;
-  background: var(--panel-2); box-shadow: inset 0 0 0 2px var(--line);
-  padding: 8px 10px;
-}
-.skills img { width: 26px; height: 26px; object-fit: contain; }
 
 .projects { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
 .projects a {
@@ -215,7 +209,7 @@ main {
   body { overflow: auto; font-size: 20px; }
   main { justify-content: flex-start; padding-top: 24px; }
   main { gap: 10px; }
-  .hotbar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; width: calc(100vw - 16px); }
+  .hotbar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: calc(100vw - 16px); }
   .slot { flex-direction: column; gap: 4px; padding: 8px 4px; font-size: 14px; }
   .slot kbd { display: none; }
   .status { text-align: center; font-size: 17px; }

@@ -1,5 +1,5 @@
 import { createScene, W, H } from './scene.js';
-import { PROFILE, ABOUT, SKILLS, PROJECTS, CONTACT, STATUS, SPOTIFY, NOW_PLAYING_URL, WEATHER_AT } from './content.js';
+import { PROFILE, ABOUT, PROJECTS, CONTACT, STATUS, SPOTIFY, NOW_PLAYING_URL, WEATHER_AT } from './content.js';
 
 const stage = document.getElementById('stage');
 const canvas = document.getElementById('room');
@@ -56,7 +56,7 @@ const scene = createScene(canvas, {
   open: openPanel,
   say(text, x, y) {
     bubble.textContent = text;
-    bubble.style.left = `${x * scale}px`;
+    bubble.style.left = `${Math.max(70, Math.min(250, x)) * scale}px`; // keep it inside the room
     bubble.style.top = `${y * scale}px`;
     bubble.classList.toggle('below', y < 34); // near the ceiling: show it underneath
     bubble.hidden = false;
@@ -98,14 +98,6 @@ const PANELS = {
         </div>
         ${ABOUT.map((p) => `<p>${esc(p)}</p>`).join('')}
       </div>`,
-  }),
-  skills: () => ({
-    title: 'Skills',
-    html: SKILLS.map((g) => `
-      <h3>${esc(g.group)}</h3>
-      <ul class="skills">${g.items.map(([n, f]) => `
-        <li><img src="assets/skills/${f}.svg" alt="" loading="lazy"><span>${esc(n)}</span></li>`).join('')}
-      </ul>`).join(''),
   }),
   projects: () => ({
     title: 'Projects',
@@ -159,7 +151,7 @@ dialog.addEventListener('click', (e) => { if (e.target === dialog) closePanel();
 document.querySelectorAll('.slot').forEach((b) => b.addEventListener('click', () => openPanel(b.dataset.open)));
 addEventListener('keydown', (e) => {
   if (e.target.closest?.('input,textarea')) return;
-  const map = { 1: 'about', 2: 'skills', 3: 'projects', 4: 'contact', 5: 'jukebox' };
+  const map = { 1: 'about', 2: 'projects', 3: 'contact', 4: 'jukebox' };
   if (map[e.key]) openPanel(map[e.key]);
   if (e.key.toLowerCase() === 'b' && !dialog.open) scene.toggleBlinds();
 });

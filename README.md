@@ -7,7 +7,7 @@
 | Framed pictures or the two monitors | Projects — WordPress sites built with Elementor and ACF |
 | PC tower | Cycles the RGB lighting |
 | Cork board | About me |
-| Bookshelf | Skills |
+| Bookshelf | Says something |
 | Phone | Contact (it rings now and then) |
 | Window | Opens and closes the blind. Shows Iloilo's time of day and its real weather (rain, storms, clouds, fog). |
 | Topz | Says something |
@@ -20,7 +20,7 @@
 | Straw hat | Hangs on the chair; says something |
 | Cockroach, mouse, frog, spider, butiki | They roam the room. Click them. |
 
-The buttons under the room (or keys **1–5**) open the same panels, so everything works without hunting.
+The buttons under the room (or keys **1–4**) open the same panels, so everything works without hunting.
 
 ## How it's built
 
