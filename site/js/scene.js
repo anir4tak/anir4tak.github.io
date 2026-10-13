@@ -173,10 +173,10 @@ export function createScene(canvas, hooks = {}) {
       for (let x = off; x < W; x += 48) R(x, y, 1, 6, C.floorLine);
     }
     // a soft rug under the desk
-    R(108, 158, 124, 14, '#26404a');
-    R(110, 160, 120, 10, '#2e5560');
-    for (let x = 112; x < 228; x += 6) R(x, 164, 3, 2, C.tealDark);
-    R(108, 158, 124, 1, '#1b2e35');
+    R(108, 158, 124, 14, '#9aa1b0');
+    R(110, 160, 120, 10, '#d4d8e0');
+    for (let x = 112; x < 228; x += 6) R(x, 164, 3, 2, '#b2b8c4');
+    R(108, 158, 124, 1, '#6b7183');
   }
 
   function drawWindow(d) {
@@ -261,14 +261,14 @@ export function createScene(canvas, hooks = {}) {
     const off = !reduced && s.t < s.neonOffUntil;
     const letters = 'TOPZ';
     const x0 = 136, y0 = 12;
-    const lit = off ? '#1f5d63' : C.tealLight;
+    const lit = off ? '#4a5068' : '#ffffff';
     if (!off) {
       ctx.save();
-      ctx.shadowColor = C.teal; ctx.shadowBlur = 8;
-      drawWord(letters, x0, y0, C.teal);
+      ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 8;
+      drawWord(letters, x0, y0, '#d9dde6');
       ctx.restore();
     }
-    drawWord(letters, x0, y0, off ? '#1d4a50' : C.teal);
+    drawWord(letters, x0, y0, off ? '#3a3f58' : '#c9ced8');
     // bright 1px core running through the tube, joined to its neighbours
     for (let n = 0; n < 4; n++) {
       const g = GLYPHS[letters[n]];
@@ -284,7 +284,7 @@ export function createScene(canvas, hooks = {}) {
       }
     }
     // tiny caption under the sign
-    R(146, 30, 28, 1, off ? '#1d4a50' : '#1f8f99');
+    R(146, 30, 28, 1, off ? '#3a3f58' : '#a9afbd');
   }
   function drawWord(word, x0, y0, color) {
     for (let n = 0; n < word.length; n++) {
@@ -368,21 +368,21 @@ export function createScene(canvas, hooks = {}) {
     const ring = s.t < s.ringUntil;
     const jx = ring ? (Math.floor(s.t * 30) % 2 ? 1 : -1) : 0;
     const px = 28 + jx, py = 104;
-    R(px + 2, py + 6, 18, 6, C.teal); R(px, py + 9, 22, 3, C.tealDark);
-    R(px + 4, py + 4, 14, 3, C.teal);
-    R(px + 7, py + 6, 8, 5, C.white); R(px + 9, py + 7, 4, 3, C.teal);
-    R(px + 1, py + (ring ? -1 : 1), 20, 3, C.tealDark);
-    R(px, py + (ring ? 0 : 2), 4, 4, C.tealDark); R(px + 18, py + (ring ? 0 : 2), 4, 4, C.tealDark);
+    R(px + 2, py + 6, 18, 6, '#eef1f6'); R(px, py + 9, 22, 3, '#8d93a3');
+    R(px + 4, py + 4, 14, 3, '#eef1f6');
+    R(px + 7, py + 6, 8, 5, '#ffffff'); R(px + 9, py + 7, 4, 3, '#b7bdc9');
+    R(px + 1, py + (ring ? -1 : 1), 20, 3, '#8d93a3');
+    R(px, py + (ring ? 0 : 2), 4, 4, '#8d93a3'); R(px + 18, py + (ring ? 0 : 2), 4, 4, '#8d93a3');
     if (ring) {
       const k = Math.floor(s.t * 6) % 2;
-      R(px - 4 - k, py + 2, 2, 1, C.tealLight); R(px - 5 - k, py + 5, 2, 1, C.tealLight);
-      R(px + 24 + k, py + 2, 2, 1, C.tealLight); R(px + 25 + k, py + 5, 2, 1, C.tealLight);
+      R(px - 4 - k, py + 2, 2, 1, '#ffffff'); R(px - 5 - k, py + 5, 2, 1, '#ffffff');
+      R(px + 24 + k, py + 2, 2, 1, '#ffffff'); R(px + 25 + k, py + 5, 2, 1, '#ffffff');
     }
     // dog bed (back half; the front lip is drawn after the dog)
-    R(64, 150, 34, 4, C.tealDark); R(66, 152, 30, 6, '#3a8e98'); R(70, 154, 22, 3, '#47a6b0');
+    R(64, 150, 34, 4, '#8d93a3'); R(66, 152, 30, 6, '#b7bdc9'); R(70, 154, 22, 3, '#dfe3ea');
   }
   function drawBedFront() {
-    R(62, 157, 38, 5, C.tealDark); R(62, 157, 38, 1, C.teal); R(64, 162, 34, 1, '#0e2e33');
+    R(62, 157, 38, 5, '#8d93a3'); R(62, 157, 38, 1, '#eef1f6'); R(64, 162, 34, 1, '#4a5068');
   }
 
   function drawMonitors(dl) {
