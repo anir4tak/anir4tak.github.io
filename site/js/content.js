@@ -66,3 +66,14 @@ export const STATUS = [
   'Mark is chasing a CSS bug',
   'Mochi is supervising',
 ];
+
+// the jukebox: public Spotify playlists, played through Spotify's own embed
+export const SPOTIFY = {
+  profile: 'https://open.spotify.com/user/22ladn56wg5hw32rfgmb7aa2q',
+  playlists: [
+    { name: 'Mugiwara Luffy', id: '3WEkRJpppqngsXGW4Vyl2K' },
+    { name: 'Baby Metal', id: '3MoWHM96y8qyoDPGwiwHyG' },
+    { name: 'Disney Mc Elle', id: '0AAERB2kPaW6ekaAU0JOiv' },
+    { name: 'Anime Songs', id: '7JHlw8fOfnkwJw0L43VBGD' },
+  ],
+};

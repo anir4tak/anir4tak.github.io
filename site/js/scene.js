@@ -127,6 +127,8 @@ export function createScene(canvas, hooks = {}) {
     ringUntil: 0, nextRing: rand(25, 45),
     neonOffUntil: 0, nextFlicker: rand(6, 14),
     hearts: [],
+    notes: [],
+    music: false,
     rgbMode: RGB_DEFAULT,
     dog: { x: 70, dir: 1, state: 'sleep', until: rand(8, 15), target: 0, wag: 0 },
   };
@@ -135,7 +137,9 @@ export function createScene(canvas, hooks = {}) {
     { id: 'window', label: 'Window · open/close the blind', x: 16, y: 26, w: 68, h: 70 },
     { id: 'projects', label: 'Projects', x: 90, y: 40, w: 56, h: 46 },
     { id: 'about', label: 'About me', x: 194, y: 38, w: 52, h: 38 },
-    { id: 'skills', label: 'Skills', x: 260, y: 50, w: 50, h: 98 },
+    { id: 'skills', label: 'Skills', x: 268, y: 50, w: 50, h: 98 },
+    { id: 'jukebox', label: 'Jukebox · my Spotify playlists', x: 241, y: 108, w: 28, h: 42 },
+    { id: 'katana', label: 'Katana rack', x: 193, y: 7, w: 66, h: 30 },
     { id: 'contact', label: 'Contact · the phone', x: 24, y: 100, w: 30, h: 18 },
     { id: 'mark', label: 'Mark', x: 146, y: 62, w: 48, h: 86 },
     { id: 'monitors', label: 'Projects · on screen', x: 126, y: 72, w: 88, h: 38 },
@@ -302,7 +306,7 @@ export function createScene(canvas, hooks = {}) {
   }
 
   function drawClock(d) {
-    const cx = 284, cy = 28;
+    const cx = 296, cy = 30;
     R(cx - 9, cy - 7, 18, 14, C.woodDark); R(cx - 7, cy - 9, 14, 18, C.woodDark);
     R(cx - 8, cy - 6, 16, 12, C.white); R(cx - 6, cy - 8, 12, 16, C.white);
     R(cx - 1, cy - 7, 2, 1, C.greyDark); R(cx - 1, cy + 6, 2, 1, C.greyDark);
@@ -318,7 +322,7 @@ export function createScene(canvas, hooks = {}) {
   }
 
   function drawShelf() {
-    const x = 262, y = 52, w = 46, h = 96;
+    const x = 270, y = 52, w = 46, h = 96;
     R(x, y, w, h, C.woodDark); R(x + 2, y + 2, w - 4, h - 4, '#2a1a12');
     R(x, y, w, 2, C.woodLight);
     const shelves = [y + 30, y + 60, y + 90];
@@ -440,12 +444,6 @@ export function createScene(canvas, hooks = {}) {
       const k = (s.t * 6 + i * 3) % 9;
       R(116 + (Math.floor(k) % 2) + i, 100 - k, 1, 1, '#ffffff55');
     }
-    // floor plant between desk and shelf
-    R(243, 134, 14, 12, C.pot); R(242, 133, 16, 2, '#d27b52'); R(243, 145, 14, 1, '#8a4a2e');
-    R(249, 108, 2, 25, C.leafDark);
-    for (const [lx, ly, lw] of [[243, 112, 6], [251, 106, 6], [242, 120, 7], [251, 116, 7], [244, 127, 5], [252, 124, 6]]) {
-      R(lx, ly, lw, 3, C.leaf); R(lx + 1, ly + 1, lw - 2, 1, C.leafDark);
-    }
   }
 
   // Mark, seen from behind, in his chair
@@ -490,8 +488,9 @@ export function createScene(canvas, hooks = {}) {
     }
     // hood bunched at the neck
     R(161, 80, 18, 7, C.hoodieDark); R(163, 79, 14, 2, C.hoodie); R(164, 86, 12, 2, C.hoodieDark);
-    sprite(HEAD_BACK, headBackPal, 162 + look, 64);
-    R(166 + look, 64, 8, 1, '#3a3456');
+    const nod = s.music && Math.floor(s.t * 4) % 2 ? 1 : 0;
+    sprite(HEAD_BACK, headBackPal, 162 + look, 64 + nod);
+    R(166 + look, 64 + nod, 8, 1, '#3a3456');
 
     // chair back (low enough to see Mark's shoulders over it)
     R(156, 96, 28, 32, C.chair); R(158, 94, 24, 3, C.chair);
@@ -529,6 +528,71 @@ export function createScene(canvas, hooks = {}) {
       ctx.fillStyle = `rgba(60,150,160,${0.4 * a})`;
       ctx.fillRect(166, 64, 8, 1);
       ctx.restore();
+    }
+  }
+
+  // three original display katanas on a wall rack
+  const KATANAS = [
+    { wrap: '#2bbecb', dark: '#17707a', saya: '#1d2340', guard: '#c9a227' },
+    { wrap: '#e48a5b', dark: '#9c5232', saya: '#3a2418', guard: '#9aa3b5' },
+    { wrap: '#4caf6a', dark: '#2f7a48', saya: '#14161f', guard: '#8a6a3a' },
+  ];
+  function drawKatanas() {
+    for (const bx of [202, 244]) { R(bx, 8, 5, 28, C.woodDark); R(bx, 8, 5, 1, C.woodLight); }
+    KATANAS.forEach((k, i) => {
+      const y = 12 + i * 8;
+      // handle with a criss-cross wrap
+      R(196, y, 14, 3, k.dark);
+      for (let x = 196; x < 210; x += 3) R(x, y + 1, 2, 1, k.wrap);
+      R(195, y, 1, 3, k.guard);
+      // guard, collar, scabbard, end cap
+      R(210, y - 1, 2, 5, k.guard);
+      R(212, y, 2, 3, k.guard);
+      R(214, y, 40, 3, k.saya); R(214, y, 40, 1, '#ffffff22');
+      R(254, y, 2, 3, k.guard);
+      // rack pegs in front
+      R(203, y + 3, 3, 1, C.woodLight); R(245, y + 3, 3, 1, C.woodLight);
+    });
+  }
+
+  // an original jukebox: arch top, spinning record, equaliser grille
+  function drawJukebox() {
+    const x = 243, y = 110, playing = s.music;
+    const hue = playing ? RGB[Math.floor(s.t * 3) % RGB.length] : C.tealDark;
+    R(x + 5, y, 14, 1, C.woodDark); R(x + 3, y + 1, 18, 2, C.woodDark); R(x + 1, y + 3, 22, 2, C.woodDark);
+    R(x, y + 5, 24, 33, C.woodDark);
+    R(x + 6, y + 1, 12, 1, C.wood); R(x + 4, y + 2, 16, 2, C.wood); R(x + 2, y + 4, 20, 2, C.wood); R(x + 1, y + 6, 22, 31, C.wood);
+    // glowing arch tube
+    R(x + 7, y + 3, 10, 1, hue); R(x + 5, y + 4, 2, 1, hue); R(x + 17, y + 4, 2, 1, hue);
+    R(x + 4, y + 5, 1, 24, hue); R(x + 19, y + 5, 1, 24, hue);
+    // record window
+    R(x + 6, y + 6, 12, 10, '#14101c');
+    R(x + 8, y + 7, 8, 8, '#0b0b10'); R(x + 7, y + 8, 10, 6, '#0b0b10');
+    R(x + 11, y + 10, 2, 2, hue);
+    const ang = playing ? Math.floor(s.t * 8) % 4 : 0;
+    const shine = [[9, 8], [14, 9], [14, 13], [9, 13]][ang];
+    R(x + shine[0], y + shine[1], 1, 1, '#4a4a5a');
+    // selection buttons
+    for (let i = 0; i < 4; i++) R(x + 6 + i * 3, y + 18, 2, 2, i === Math.floor(s.t) % 4 && playing ? '#fff3b0' : '#d3b38a');
+    // equaliser grille
+    R(x + 6, y + 22, 12, 12, '#2a1a12');
+    for (let i = 0; i < 4; i++) {
+      const lvl = playing ? 3 + Math.floor((Math.sin(s.t * (5 + i * 1.7) + i) + 1) * 4) : 2;
+      R(x + 7 + i * 3, y + 33 - lvl, 2, lvl, playing ? hue : '#4a3226');
+    }
+    R(x + 2, y + 37, 4, 2, C.woodDeep); R(x + 18, y + 37, 4, 2, C.woodDeep);
+    // a tiny plant living on top
+    R(x + 9, y - 5, 6, 5, C.pot); R(x + 11, y - 9, 2, 4, C.leafDark); R(x + 9, y - 8, 2, 2, C.leaf); R(x + 13, y - 9, 2, 2, C.leaf);
+  }
+
+  function drawNotes(dt) {
+    if (s.music && !reduced && Math.random() < dt * 1.6)
+      s.notes.push({ x: 250 + rand(0, 10), y: 112, life: 2.4, c: RGB[Math.floor(rand(0, RGB.length))] });
+    s.notes = s.notes.filter((n) => (n.life -= dt) > 0);
+    for (const n of s.notes) {
+      n.y -= dt * 9; n.x += Math.sin(n.life * 4) * dt * 6;
+      const x = Math.round(n.x), y = Math.round(n.y);
+      R(x, y + 3, 2, 2, n.c); R(x + 1, y, 1, 3, n.c); R(x + 2, y, 1, 1, n.c);
     }
   }
 
@@ -604,8 +668,10 @@ export function createScene(canvas, hooks = {}) {
     drawFrames();
     drawCork();
     drawClock(d);
+    drawKatanas();
     drawFloor();
     drawShelf();
+    drawJukebox();
     drawCabinet(d);
     drawDesk(light);
     drawMark();
@@ -614,6 +680,7 @@ export function createScene(canvas, hooks = {}) {
     drawLights(light);
     drawNeon(d);
     drawHearts(1 / 60);
+    drawNotes(1 / 60);
     drawHover();
   }
 
@@ -630,7 +697,7 @@ export function createScene(canvas, hooks = {}) {
   // ---------- input ----------
   function hit(x, y) {
     // dog first: it walks in front of everything
-    const order = ['dog', 'contact', 'mug', 'mark', 'pc', 'monitors', 'window', 'projects', 'about', 'skills'];
+    const order = ['dog', 'contact', 'mug', 'jukebox', 'katana', 'mark', 'pc', 'monitors', 'window', 'projects', 'about', 'skills'];
     for (const id of order) {
       const o = objects.find((ob) => ob.id === id);
       if (x >= o.x && x < o.x + o.w && y >= o.y && y < o.y + o.h) return o;
@@ -646,6 +713,8 @@ export function createScene(canvas, hooks = {}) {
     'Coffee count today: classified.',
   ];
   let lineIdx = 0;
+  const KATANA_LINES = ['Three swords. Zero sword skills.', 'Decor only — Mochi is the real guard.', 'Display swords. Please do not debug with them.'];
+  let katanaIdx = 0;
 
   function click(o) {
     if (!o) return;
@@ -661,6 +730,7 @@ export function createScene(canvas, hooks = {}) {
       hooks.say?.(MARK_LINES[lineIdx++ % MARK_LINES.length], 170, 58);
       return;
     }
+    if (o.id === 'katana') { hooks.say?.(KATANA_LINES[katanaIdx++ % KATANA_LINES.length], 226, 40); return; }
     if (o.id === 'mug') { hooks.say?.('This MEETING should have been an EMAIL', 118, 96); return; }
     if (o.id === 'pc') { s.rgbMode = (s.rgbMode + 1) % (RGB.length + 1); return; }
     if (o.id === 'contact') s.ringUntil = 0;
@@ -672,6 +742,7 @@ export function createScene(canvas, hooks = {}) {
     hitAt: hit,
     click,
     setHover(id) { s.hover = id; },
+    setMusic(on) { s.music = on; },
     toggleBlinds() { s.blindsTarget = s.blindsTarget ? 0 : 1; },
   };
 }

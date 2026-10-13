@@ -215,7 +215,7 @@ main {
   body { overflow: auto; font-size: 20px; }
   main { justify-content: flex-start; padding-top: 24px; }
   main { gap: 10px; }
-  .hotbar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: calc(100vw - 16px); }
+  .hotbar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; width: calc(100vw - 16px); }
   .slot { flex-direction: column; gap: 4px; padding: 8px 4px; font-size: 14px; }
   .slot kbd { display: none; }
   .status { text-align: center; font-size: 17px; }
@@ -224,3 +224,17 @@ main {
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/* ---------- jukebox ---------- */
+.jukebox .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.jukebox .tabs button {
+  font: 600 15px 'Pixelify Sans', monospace;
+  color: var(--muted); background: var(--panel-2);
+  border: 0; padding: 6px 12px; cursor: pointer;
+  box-shadow: inset 0 0 0 2px var(--line);
+}
+.jukebox .tabs button[aria-selected="true"] { color: #062a2e; background: var(--teal); box-shadow: none; }
+.jukebox .tabs button:hover, .jukebox .tabs button:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--teal); }
+.jukebox .player { min-height: 352px; background: #0004; }
+.jukebox .player iframe, .jukebox .player > * { display: block; border: 0; border-radius: 12px; }
+.muted { color: var(--muted); margin: 12px 0 0; }

@@ -12,8 +12,11 @@
 | Window | Opens and closes the blind. The sky follows *your* local time. |
 | Mark | Says something |
 | Mochi | Wakes up, or says hi |
+| Jukebox | Plays my Spotify playlists. While music plays, the jukebox lights up and Mark nods along. |
+| Katana rack | Three display swords (original designs) |
+| Mug | This MEETING should have been an EMAIL |
 
-The buttons under the room (or keys **1–4**) open the same panels, so everything works without hunting.
+The buttons under the room (or keys **1–5**) open the same panels, so everything works without hunting.
 
 ## How it's built
 
