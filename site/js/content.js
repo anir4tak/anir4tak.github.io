@@ -75,21 +75,3 @@ export const NOW_PLAYING_URL = '';
 // the window shows the real weather here (Open-Meteo, no key needed)
 export const WEATHER_AT = { name: 'Iloilo', lat: 10.72, lon: 122.56 };
 
-// real photos from Topz's shelf: the treasure chest turns these up at random
-export const COLLECTION = [
-  { file: 'shelf', say: 'A photo from my shelf! The whole crew.', caption: 'My One Piece corner: wanted posters on the wall, the crew on the desk.' },
-  { file: 'poneglyph', say: 'A photo from my shelf! My poneglyph replica.', caption: 'My poneglyph replica. Every face is covered in glyphs. Can anyone read it?' },
-  { file: 'katanas', say: 'A photo from my shelf! My three mini katanas.', caption: 'My three mini katanas, lined up on the desk.' },
-  { file: 'zoro', say: 'A photo from my shelf! Zoro.', caption: 'Zoro, the centrepiece of my collection.' },
-  { file: 'luffy', say: 'A photo from my shelf! Luffy.', caption: 'Luffy, fists flying.' },
-  { file: 'ace', say: 'A photo from my shelf! Ace.', caption: 'Portgas D. Ace, arms wide.' },
-  { file: 'sabo', say: 'A photo from my shelf! Sabo.', caption: 'Sabo with his pipe.' },
-  { file: 'sanji', say: 'A photo from my shelf! Sanji.', caption: 'Sanji, mid-kick.' },
-  { file: 'nami', say: 'A photo from my shelf! Nami.', caption: 'Nami with her staff, calling the weather.' },
-  { file: 'robin', say: 'A photo from my shelf! Robin.', caption: 'Nico Robin, reading as always.' },
-  { file: 'chopper', say: 'A photo from my shelf! Chopper.', caption: 'Chopper: small, but mighty.' },
-  { file: 'rayleigh', say: 'A photo from my shelf! Rayleigh.', caption: 'Silvers Rayleigh by the campfire.' },
-  { file: 'vivi', say: 'A photo from my shelf! Vivi.', caption: 'Princess Vivi.' },
-  { file: 'shirahoshi', say: 'A photo from my shelf! Shirahoshi.', caption: 'Princess Shirahoshi.' },
-  { file: 'mini-chest', say: 'A photo from my shelf! The tiny chest.', caption: 'The tiny treasure chest that inspired this one.' },
-];

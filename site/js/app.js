@@ -1,5 +1,5 @@
 import { createScene, W, H } from './scene.js';
-import { PROFILE, ABOUT, PROJECTS, CONTACT, STATUS, SPOTIFY, NOW_PLAYING_URL, WEATHER_AT, COLLECTION } from './content.js';
+import { PROFILE, ABOUT, PROJECTS, CONTACT, STATUS, SPOTIFY, NOW_PLAYING_URL, WEATHER_AT } from './content.js';
 
 const stage = document.getElementById('stage');
 const canvas = document.getElementById('room');
@@ -54,7 +54,6 @@ document.getElementById('rotate-skip').addEventListener('click', () => {
 let bubbleTimer;
 const scene = createScene(canvas, {
   open: openPanel,
-  photos: COLLECTION,
   photo(item) { showPhoto(item); },
   say(text, x, y) {
     bubble.textContent = text;
