@@ -150,6 +150,7 @@ export function createScene(canvas, hooks = {}) {
     weather: 'clear', flashUntil: 0, nextFlash: 8,
     ac: true,
     bulb: false, bulbGlow: 0,
+    squeeze: { at: -10, count: 0 }, // the stress-ball alien
     chest: { open: 0, target: 0, item: null, itemAt: 0, closeAt: 0, last: -1, sparks: [] },
     roach: { x: 200, y: 170, tx: 200, ty: 170, state: 'wait', until: rand(3, 8), dir: 1, flee: false },
     mouse: { state: 'home', x: 82, dir: 1, until: rand(10, 20), tx: 82 },
@@ -175,7 +176,8 @@ export function createScene(canvas, hooks = {}) {
     { id: 'monitors', label: 'Projects · on screen', x: 86, y: 64, w: 128, h: 46 },
     { id: 'pc', label: 'PC · change the RGB', x: 218, y: 70, w: 24, h: 42 },
     { id: 'bottle', label: 'Water bottle · take a sip', x: 175, y: 96, w: 8, h: 15 },
-    { id: 'mug', label: 'Mug · "This MEETING should have been an EMAIL"', x: 62, y: 98, w: 14, h: 13 },
+    { id: 'mug', label: 'Mug · "This MEETING should have been an EMAIL"', x: 62, y: 98, w: 13, h: 13 },
+    { id: 'alien', label: 'Stress ball alien · squeeze it', x: 75, y: 96, w: 13, h: 15 },
     { id: 'dog', label: 'Mochi', x: 0, y: 0, w: 18, h: 14 },
     { id: 'aircon', label: 'Aircon · on/off', x: 132, y: 2, w: 60, h: 18 },
     { id: 'bulb', label: 'Light bulb · on/off', x: 87, y: 0, w: 14, h: 24 },
@@ -504,6 +506,80 @@ export function createScene(canvas, hooks = {}) {
     return col;
   }
 
+  // ---------- stress ball alien, beside the mug ----------
+  const ALIEN_CX = 81, ALIEN_FLOOR = 110;
+  function squish() {
+    // fast squash, a hold, then a wobbly bounce back
+    const k = s.t - s.squeeze.at;
+    if (k < 0 || k > 1.1) return { press: 0, wob: 0 };
+    if (k < 0.08) return { press: k / 0.08, wob: 0 };
+    if (k < 0.45) return { press: 1, wob: 0 };
+    const r = (k - 0.45) / 0.65;
+    return { press: Math.max(0, (1 - r) * Math.cos(r * 9)), wob: (1 - r) };
+  }
+  function drawAlien() {
+    const { press, wob } = squish();
+    const p = Math.max(-0.4, Math.min(1, press));
+    const bw = 9 + Math.round(4 * p), bh = 8 - Math.round(3.5 * p);
+    const cx = ALIEN_CX, bx = cx - Math.floor(bw / 2), by = ALIEN_FLOOR - bh;
+    const g = '#86e07f', gL = '#c4f5b8', gD = '#4fae55';
+    // antennae, wobbling after a squeeze
+    const sway = reduced ? 0 : Math.round(Math.sin(s.t * 26) * 1.5 * wob);
+    if (p < 0.8) {
+      R(cx - 3 + sway, by - 3, 1, 3, gD); R(cx + 2 - sway, by - 3, 1, 3, gD);
+      R(cx - 4 + sway, by - 5, 2, 2, '#ff8fab'); R(cx + 2 - sway, by - 5, 2, 2, '#ff8fab');
+    } else { // squashed flat, antennae splay out sideways
+      R(cx - 6, by - 1, 2, 1, gD); R(cx + 5, by - 1, 2, 1, gD);
+      R(cx - 8, by - 2, 2, 2, '#ff8fab'); R(cx + 7, by - 2, 2, 2, '#ff8fab');
+    }
+    // squishy body
+    R(bx + 1, by, bw - 2, bh, g); R(bx, by + 1, bw, Math.max(1, bh - 2), g);
+    R(bx + 2, by + 1, 2, 1, gL); R(bx + 1, by + bh - 1, bw - 2, 1, gD);
+    if (p > 0.6) { // bulging eyes, open mouth, stress lines
+      R(cx - 4, by - 1, 3, 3, '#f4f6fb'); R(cx + 1, by - 1, 3, 3, '#f4f6fb');
+      R(cx - 3, by, 1, 1, '#15121c'); R(cx + 2, by, 1, 1, '#15121c');
+      R(cx - 1, by + bh - 3, 2, 2, '#3a1e2a');
+      R(bx - 3, by + 1, 2, 1, '#f4f6fb'); R(bx - 3, by + 3, 2, 1, '#f4f6fb');
+      R(bx + bw + 1, by + 1, 2, 1, '#f4f6fb'); R(bx + bw + 1, by + 3, 2, 1, '#f4f6fb');
+    } else { // calm: big glossy eyes, little smile
+      const blink = Math.floor(s.t * 10) % 47 === 0;
+      if (blink) { R(cx - 3, by + 3, 2, 1, '#15121c'); R(cx + 1, by + 3, 2, 1, '#15121c'); }
+      else {
+        R(cx - 3, by + 2, 2, 2, '#15121c'); R(cx + 1, by + 2, 2, 2, '#15121c');
+        R(cx - 3, by + 2, 1, 1, '#ffffff'); R(cx + 1, by + 2, 1, 1, '#ffffff');
+      }
+      R(cx - 1, by + bh - 2, 2, 1, gD);
+      R(bx + 1, by + 4, 1, 1, '#ff8fab'); R(bx + bw - 2, by + 4, 1, 1, '#ff8fab'); // blush
+    }
+  }
+  const SQUEEZE_TOPZ = [
+    'Client says "make it pop". *squeeze*',
+    'Merge conflict. *squeeeeze*',
+    'It works on my machine… *squeeze*',
+    'Elementor update broke the layout. *SQUEEZE*',
+    'One more revision, they said. *squeeze*',
+    'Deep breath… *squeeze*',
+    '"Quick change" at 5 PM on a Friday. *squeeze*',
+  ];
+  const SQUEEZE_ALIEN = [
+    'Bleep! Too tight!', 'Blorp…', 'I come in peace! PEACE!', 'Squeeeak!',
+    'Take me to your… stress.', 'My antennae!!', 'Zorp! Okay, okay, breathe!', 'I felt that in my UFO.',
+  ];
+  const SQUEEZE_MILESTONES = {
+    10: "10 squeezes. That deadline must be close.",
+    25: '25 squeezes?! The alien wants hazard pay.',
+    50: '50 squeezes. Okay, go drink some water. 💧',
+    100: '100 squeezes. Achievement unlocked: Stress Master. 👽',
+  };
+  let squeezeIdx = 0, alienReply;
+  function squeezeAlien() {
+    const q = s.squeeze;
+    q.at = s.t; q.count++;
+    clearTimeout(alienReply);
+    hooks.say?.(SQUEEZE_MILESTONES[q.count] || SQUEEZE_TOPZ[squeezeIdx++ % SQUEEZE_TOPZ.length], ALIEN_CX, 92);
+    alienReply = setTimeout(() => hooks.say?.(SQUEEZE_ALIEN[Math.floor(Math.random() * SQUEEZE_ALIEN.length)], ALIEN_CX, 92), 1300);
+  }
+
   function drawDesk(dl) {
     // one long desk across the room
     R(30, 110, 260, 4, C.woodLight); R(30, 110, 260, 1, '#c48a60');
@@ -521,6 +597,7 @@ export function createScene(canvas, hooks = {}) {
     // desk lamp on the left, head tipped over the mug
     R(46, 107, 12, 3, '#3a3f58'); R(51, 86, 2, 21, '#3a3f58');
     R(51, 84, 10, 2, '#3a3f58'); R(58, 80, 12, 5, C.teal); R(59, 85, 10, 1, '#fff6c8');
+    drawAlien();
     // mug with steam
     R(64, 102, 8, 8, C.white); R(72, 104, 2, 4, C.white);
     R(65, 104, 6, 1, '#2b3245'); R(65, 106, 4, 1, C.teal); R(65, 108, 6, 1, '#2b3245');
@@ -1269,7 +1346,7 @@ export function createScene(canvas, hooks = {}) {
   // ---------- input ----------
   function hit(x, y) {
     // critters first: they wander in front of things
-    const order = ['roach', 'mouse', 'frog', 'spider', 'lizard', 'chest', 'dog', 'bottle', 'mug', 'hat', 'bulb', 'aircon', 'jukebox', 'about', 'projects', 'contact', 'shelf', 'katana', 'mark', 'pc', 'monitors', 'window', 'window2'];
+    const order = ['roach', 'mouse', 'frog', 'spider', 'lizard', 'chest', 'dog', 'bottle', 'alien', 'mug', 'hat', 'bulb', 'aircon', 'jukebox', 'about', 'projects', 'contact', 'shelf', 'katana', 'mark', 'pc', 'monitors', 'window', 'window2'];
     for (const id of order) {
       const o = objects.find((ob) => ob.id === id);
       if (x >= o.x && x < o.x + o.w && y >= o.y && y < o.y + o.h) return o;
@@ -1331,6 +1408,7 @@ export function createScene(canvas, hooks = {}) {
     }
     if (o.id === 'katana') { hooks.say?.(KATANA_LINES[katanaIdx++ % KATANA_LINES.length], 162, 40); return; }
     if (o.id === 'bottle') { startDrink(); return; }
+    if (o.id === 'alien') { squeezeAlien(); return; }
     if (o.id === 'mug') { hooks.say?.('This MEETING should have been an EMAIL', 68, 96); return; }
     if (o.id === 'pc') { s.rgbMode = (s.rgbMode + 1) % (RGB.length + 1); return; }
     hooks.open?.(o.id === 'monitors' ? 'projects' : o.id);

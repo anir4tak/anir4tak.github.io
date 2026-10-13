@@ -15,6 +15,7 @@
 | Jukebox | Shows what Topz is listening to right now (see `worker/README.md`), and plays his playlists. While music plays, the jukebox lights up, Topz nods along and taps his foot. |
 | Katana rack | Three display swords (original designs) |
 | Mug | This MEETING should have been an EMAIL |
+| Stress ball alien (beside the mug) | Squish! Topz vents about a dev problem, then the alien complains. Keep squeezing for milestones at 10, 25, 50 and 100 |
 | Water bottle | Topz takes a sip (he also does on his own) |
 | Aircon | On/off |
 | Straw hat | Hangs on the chair; says something |
