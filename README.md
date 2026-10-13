@@ -13,7 +13,7 @@
 | Topz | Says something |
 | Mochi | Wakes up, or says hi |
 | Jukebox | Shows what Topz is listening to right now (see `worker/README.md`), and plays his playlists. While music plays, the jukebox lights up and Topz nods along. |
-| Sword rack | Topz's own pixel art of his three swords |
+| Katana rack | Three display swords (original designs) |
 | Mug | This MEETING should have been an EMAIL |
 | Water bottle | Topz takes a sip (he also does on his own) |
 | Aircon | On/off |

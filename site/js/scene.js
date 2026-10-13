@@ -157,7 +157,7 @@ export function createScene(canvas, hooks = {}) {
     { id: 'about', label: 'About me', x: 194, y: 38, w: 52, h: 38 },
     { id: 'shelf', label: 'Bookshelf', x: 268, y: 50, w: 50, h: 98 },
     { id: 'jukebox', label: 'Jukebox · my Spotify playlists', x: 241, y: 108, w: 28, h: 42 },
-    { id: 'katana', label: 'Sword rack', x: 193, y: 7, w: 66, h: 30 },
+    { id: 'katana', label: 'Katana rack', x: 193, y: 7, w: 66, h: 30 },
     { id: 'contact', label: 'Contact · the phone', x: 24, y: 100, w: 30, h: 18 },
     { id: 'mark', label: 'Topz', x: 146, y: 62, w: 48, h: 86 },
     { id: 'monitors', label: 'Projects · on screen', x: 126, y: 72, w: 88, h: 38 },
@@ -642,11 +642,7 @@ export function createScene(canvas, hooks = {}) {
     { wrap: '#e48a5b', dark: '#9c5232', saya: '#3a2418', guard: '#9aa3b5' },
     { wrap: '#4caf6a', dark: '#2f7a48', saya: '#14161f', guard: '#8a6a3a' },
   ];
-  // Topz's own pixel art of his sword rack, drawn as-is on the wall
-  const rackArt = new Image();
-  rackArt.src = 'assets/katana-rack.png';
   function drawKatanas() {
-    if (rackArt.complete && rackArt.naturalWidth) { ctx.drawImage(rackArt, 193, 7); return; }
     for (const bx of [202, 244]) { R(bx, 8, 5, 28, C.woodDark); R(bx, 8, 5, 1, C.woodLight); }
     KATANAS.forEach((k, i) => {
       const y = 12 + i * 8;
