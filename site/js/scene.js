@@ -101,6 +101,11 @@ const STARS = Array.from({ length: 22 }, (_, i) => ({
 }));
 
 // ---------- time of day (the viewer's own clock) ----------
+// Topz's window shows Topz's sky: Iloilo time (UTC+8, no daylight saving)
+function iloiloNow() {
+  const d = new Date();
+  return new Date(d.getTime() + (480 + d.getTimezoneOffset()) * 60000);
+}
 function daylight(d) {
   const h = d.getHours() + d.getMinutes() / 60;
   if (h < 5 || h >= 20) return { phase: 'night', light: 0 };
@@ -132,6 +137,13 @@ export function createScene(canvas, hooks = {}) {
     ringUntil: 0, nextRing: rand(25, 45),
     neonOffUntil: 0, nextFlicker: rand(6, 14),
     hearts: [],
+    weather: 'clear', flashUntil: 0, nextFlash: 8,
+    ac: true,
+    roach: { x: 200, y: 170, tx: 200, ty: 170, state: 'wait', until: rand(3, 8), dir: 1, flee: false },
+    mouse: { state: 'home', x: 82, dir: 1, until: rand(10, 20), tx: 82 },
+    frog: { x: 196, y: 168, from: null, to: null, hopAt: 0, next: rand(3, 7) },
+    spider: { y: 16, ty: 40, state: 'wait', until: rand(4, 10) },
+    lizard: { x: 250, y: 46, dir: -1, tx: 240, ty: 70, state: 'freeze', until: rand(2, 6) },
     notes: [],
     music: false,
     rgbMode: RGB_DEFAULT,
@@ -152,8 +164,16 @@ export function createScene(canvas, hooks = {}) {
     { id: 'bottle', label: 'Water bottle · take a sip', x: 194, y: 96, w: 8, h: 15 },
     { id: 'mug', label: 'Mug · "This MEETING should have been an EMAIL"', x: 112, y: 98, w: 13, h: 13 },
     { id: 'dog', label: 'Mochi', x: 0, y: 0, w: 18, h: 14 },
+    { id: 'aircon', label: 'Aircon · on/off', x: 90, y: 3, w: 44, h: 18 },
+    { id: 'hat', label: 'Straw hat', x: 157, y: 102, w: 26, h: 12 },
+    { id: 'roach', label: '?', x: -99, y: 0, w: 14, h: 11 },
+    { id: 'mouse', label: '?', x: -99, y: 0, w: 12, h: 9 },
+    { id: 'frog', label: 'Frog', x: -99, y: 0, w: 11, h: 9 },
+    { id: 'spider', label: 'Spider', x: -99, y: 0, w: 11, h: 9 },
+    { id: 'lizard', label: 'Butiki', x: -99, y: 0, w: 14, h: 8 },
   ];
   const dogBox = objects.find((o) => o.id === 'dog');
+  const box = (id) => objects.find((o) => o.id === id);
 
   // ---------- drawing ----------
   function drawWall() {
@@ -181,20 +201,26 @@ export function createScene(canvas, hooks = {}) {
 
   function drawWindow(d) {
     const { phase } = daylight(d);
-    const [top, bottom] = SKY[phase];
+    const wx = s.weather;
+    const wet = wx === 'rain' || wx === 'storm';
+    const gloomy = wet || wx === 'cloudy' || wx === 'fog';
+    let [top, bottom] = SKY[phase];
+    if (gloomy) { const g = phase === 'night' ? '#151a2c' : '#6d7484'; top = mix(top, g, 0.6); bottom = mix(bottom, g, 0.6); }
+    const flash = s.t < s.flashUntil;
+    if (flash) { top = '#e9eefc'; bottom = '#c9d3f0'; }
     const x0 = 20, y0 = 30, w = 60, h = 54;
     for (let j = 0; j < h; j++) {
       const k = j / h;
       ctx.fillStyle = mix(top, bottom, k);
       ctx.fillRect(x0, y0 + j, w, 1);
     }
-    if (phase === 'night' || phase === 'dusk') {
+    if (!gloomy && (phase === 'night' || phase === 'dusk')) {
       for (const st of STARS) {
         const tw = Math.sin(s.t * 2 + st.p) > 0.2;
         if (phase === 'night' || st.y < 45) R(st.x, st.y, 1, 1, tw ? '#ffffff' : '#7d86b8');
       }
     }
-    if (phase === 'night') {
+    if (gloomy) { /* sun and moon hidden behind the clouds */ } else if (phase === 'night') {
       R(62, 36, 7, 7, '#f3f0d6'); R(64, 36, 5, 1, '#f3f0d6');
       R(61, 37, 1, 5, '#f3f0d6'); R(65, 38, 4, 4, '#dcd6b0');
       R(63, 37, 6, 5, '#070a22'); // crescent bite
@@ -205,11 +231,11 @@ export function createScene(canvas, hooks = {}) {
       R(63, sunY + 1, 10, 6, phase === 'day' ? '#fff3b0' : '#ffd08a');
     }
     // drifting clouds
-    if (phase !== 'night') {
-      const cc = phase === 'day' ? '#ffffff' : '#f7c4a8';
-      for (let i = 0; i < 3; i++) {
+    if (phase !== 'night' || gloomy) {
+      const cc = gloomy ? (phase === 'night' ? '#262b40' : '#a7adba') : phase === 'day' ? '#ffffff' : '#f7c4a8';
+      for (let i = 0; i < (gloomy ? 6 : 3); i++) {
         const cx = x0 - 20 + ((s.t * (2 + i) + i * 31) % (w + 30));
-        const cy = y0 + 8 + i * 13;
+        const cy = y0 + (gloomy ? 4 + i * 6 : 8 + i * 13);
         ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, w, h); ctx.clip();
         R(cx, cy, 14, 3, cc); R(cx + 3, cy - 2, 7, 2, cc); R(cx + 2, cy + 3, 10, 1, cc);
         ctx.restore();
@@ -220,6 +246,23 @@ export function createScene(canvas, hooks = {}) {
     const blds = [[20, 10], [27, 16], [33, 8], [40, 20], [47, 12], [55, 18], [62, 9], [68, 14], [74, 11]];
     for (const [bx, bh] of blds) R(bx, 84 - bh, 7, bh, sil);
     if (phase !== 'day') for (const [bx, bh] of blds) if (bh > 10) R(bx + 2, 84 - bh + 3, 1, 1, '#ffd36b');
+
+    // weather on the glass
+    ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, w, h); ctx.clip();
+    if (wet) {
+      const n = wx === 'storm' ? 34 : 22;
+      for (let i = 0; i < n; i++) {
+        const rx = x0 - 6 + ((i * 23 + s.t * 18) % (w + 12));
+        const ry = y0 + ((i * 41 + s.t * (wx === 'storm' ? 110 : 80)) % h);
+        R(rx, ry, 1, 2, '#c9d8efaa'); R(rx - 1, ry + 2, 1, 2, '#c9d8ef66');
+      }
+      for (let i = 0; i < 7; i++) { // drops sliding down the pane
+        const dx = x0 + 3 + ((i * 17) % (w - 6)), dy = y0 + ((i * 29 + s.t * (3 + i % 3)) % h);
+        R(dx, dy, 1, 2, '#e4eefc'); R(dx, dy - 3, 1, 3, '#e4eefc44');
+      }
+    }
+    if (wx === 'fog') { ctx.fillStyle = '#c9ced866'; ctx.fillRect(x0, y0, w, h); }
+    ctx.restore();
 
     // roller blind
     const bh = Math.round(s.blinds * h);
@@ -459,16 +502,16 @@ export function createScene(canvas, hooks = {}) {
   // Mark, seen from behind, in his chair
   const HEAD_BACK = [
     '....hhhhhhhh....',
-    '..hhhPPPPPPhhh..',
-    '.hhPPhhhhhhPPhh.',
-    '.hPhhhHhhHhhhPh.',
-    'hhPhhhhhhhhhhPhh',
-    'ppphhhhhhhhhhppp',
-    'ppphhhHhhhhhhppp',
-    'ppphhhhhhhhhhppp',
-    'ppphhhhhhhhhhppp',
-    '.pphhhhhhhhhhpp.',
-    '..shhhhhhhhhhs..',
+    '..hhhhhhhhhhhh..',
+    '.hhhhHhhhhhHhhh.',
+    '.hhhhhhhHhhhhhh.',
+    '.hhhhhhhhhhhhhh.',
+    '.hhhHhhhhhhhhhh.',
+    '.hhhhhhhhhhHhhh.',
+    '.shhhhhhhhhhhhs.',
+    '.Shhhhhhhhhhhhs.',
+    '..hhhhhhhhhhhh..',
+    '..hhhhhhhhhhhh..',
     '...hhhhhhhhhh...',
     '....hhhhhhhh....',
     '.....ssssss.....',
@@ -524,6 +567,7 @@ export function createScene(canvas, hooks = {}) {
     R(166, 104, 8, 6, C.chairLight);
     R(156, 126, 28, 4, '#0b0c14');
     R(150, 128, 40, 4, C.chair);
+    drawHat();
     ctx.restore();
   }
 
@@ -562,7 +606,9 @@ export function createScene(canvas, hooks = {}) {
   function drawLights(dl) {
     // the room darkens with the outside light; the lamp, neon, screens and PC push back
     const dark = 0.5 * (1 - dl) + (s.blinds > 0.5 ? 0.08 : 0);
-    if (dark > 0.01) { ctx.fillStyle = `rgba(6,8,24,${dark})`; ctx.fillRect(0, 0, W, H); }
+    const gloom = s.weather === 'rain' || s.weather === 'storm' ? 0.1 : s.weather === 'cloudy' || s.weather === 'fog' ? 0.05 : 0;
+    if (dark + gloom > 0.01) { ctx.fillStyle = `rgba(6,8,24,${dark + gloom})`; ctx.fillRect(0, 0, W, H); }
+    if (s.t < s.flashUntil) { ctx.fillStyle = 'rgba(220,230,255,0.18)'; ctx.fillRect(0, 0, W, H); }
     if (dl < 0.8) {
       const a = 1 - dl;
       ctx.save();
@@ -653,6 +699,220 @@ export function createScene(canvas, hooks = {}) {
     }
   }
 
+  // a straw hat hanging off the back of the chair by its chin cord
+  function drawHat() {
+    const sway = reduced ? 0 : Math.round(Math.sin(s.t * 1.7) * 0.6);
+    const x = 159 + sway, y = 104;
+    R(169, 98, 1, 6, '#c9a456'); R(171, 98, 1, 6, '#c9a456');
+    R(x + 7, y, 8, 1, '#efd28a');
+    R(x + 6, y + 1, 10, 4, '#e2bf6e');
+    R(x + 6, y + 4, 10, 2, '#3a5a8c'); // navy band
+    R(x, y + 6, 22, 2, '#e8c77a'); R(x + 1, y + 8, 20, 1, '#c9a456');
+    for (let i = 0; i < 5; i++) R(x + 2 + i * 4, y + 6, 2, 1, '#d4b062');
+    R(x + 8, y + 1, 2, 1, '#f6e2a8');
+  }
+
+  // ---------- aircon ----------
+  function drawAircon() {
+    const x = 92, y = 5;
+    R(x, y, 40, 13, '#eef1f6'); R(x, y, 40, 1, '#ffffff'); R(x, y + 12, 40, 1, '#9aa1b0');
+    R(x + 2, y + 9, 36, 2, '#c9ced8');
+    const flap = s.ac && !reduced ? (Math.floor(s.t * 0.8) % 2) : 0;
+    R(x + 3, y + 10 + flap, 34, 1, '#8d93a3');
+    R(x + 34, y + 3, 2, 2, s.ac ? '#5fe08a' : '#6b7183');
+    R(x + 4, y + 3, 10, 1, '#d4d8e0');
+    if (s.ac && !reduced) {
+      for (let i = 0; i < 5; i++) {
+        const k = (s.t * 6 + i * 4) % 14;
+        const ax = x + 6 + i * 7 + Math.round(Math.sin(s.t * 2 + i) * 1);
+        R(ax, y + 14 + k, 3, 1, `rgba(220,235,255,${0.35 * (1 - k / 14)})`);
+      }
+    }
+  }
+
+  // ---------- critters ----------
+  const SAY = {
+    roach: ['Oh, you got me!', "Okay okay, I'm leaving!", 'I pay rent here too, you know.', "Don't tell Mochi!", 'Just passing through!'],
+    mouse: ['Squeak! I was never here.', 'I only came for the crumbs.', "Mochi can't catch me!", '*squeak squeak*'],
+    frog: ['Ribbit.', 'Ribbit! (that means hire Topz)', "I'm not a prince, sorry.", 'Is it raining yet?', '*blinks slowly*'],
+    frogRain: ['Rain! Best. Day. Ever.', 'Ribbit ribbit! It\'s raining!', 'Perfect frog weather.'],
+    spider: ['Just hanging out.', 'I fix bugs too. The flying kind.', 'Web developer, literally.', "Don't mind me, I'm debugging the ceiling."],
+    lizard: ['Tik-tik-tik!', 'Not a tuko. Butiki, thank you.', "I eat the mosquitoes. You're welcome.", 'Wall-crawling: the original responsive layout.'],
+  };
+  const sayIdx = {};
+  const sayLine = (k) => { sayIdx[k] = (sayIdx[k] || 0) + 1; return SAY[k][sayIdx[k] % SAY[k].length]; };
+
+  function updateCritters(dt) {
+    // cockroach: dashes across the floor, stops, dashes again
+    const r = s.roach;
+    if (r.state === 'gone') {
+      if (s.t > r.until) { r.x = Math.random() < 0.5 ? -6 : W + 6; r.y = rand(148, 176); r.state = 'run'; r.flee = false; r.tx = rand(30, 290); r.ty = rand(148, 176); }
+    } else if (r.state === 'wait') {
+      if (s.t > r.until) { r.state = 'run'; r.tx = rand(10, 310); r.ty = rand(146, 176); }
+    } else {
+      const sp = r.flee ? 110 : 38;
+      const dx = r.tx - r.x, dy = r.ty - r.y, dist = Math.hypot(dx, dy);
+      if (dist < sp * dt) {
+        r.x = r.tx; r.y = r.ty;
+        if (r.flee) { r.state = 'gone'; r.until = s.t + rand(20, 45); }
+        else { r.state = 'wait'; r.until = s.t + rand(0.4, 3.5); }
+      } else { r.x += dx / dist * sp * dt; r.y += dy / dist * sp * dt; r.dir = dx > 0 ? 1 : -1; }
+    }
+    // mouse: lives in the hole by the cabinet
+    const m = s.mouse;
+    const msp = m.fast ? 70 : 40;
+    if (m.state === 'home' && s.t > m.until) { m.state = 'peek'; m.until = s.t + 1.6; m.x = 82; }
+    else if (m.state === 'peek' && s.t > m.until) {
+      if (Math.random() < 0.65) { m.state = 'run'; m.tx = rand(108, 150); m.dir = 1; m.fast = false; }
+      else { m.state = 'home'; m.until = s.t + rand(8, 18); }
+    } else if (m.state === 'run' || m.state === 'back') {
+      const d = m.tx - m.x;
+      if (Math.abs(d) < msp * dt) {
+        m.x = m.tx;
+        if (m.state === 'back') { m.state = 'home'; m.until = s.t + rand(10, 25); m.fast = false; }
+        else { m.state = 'sniff'; m.until = s.t + rand(1, 2.5); }
+      } else { m.x += Math.sign(d) * msp * dt; m.dir = Math.sign(d); }
+    } else if (m.state === 'sniff' && s.t > m.until) { m.state = 'back'; m.tx = 80; }
+    // frog: hops around the rug, more when it rains
+    const f = s.frog;
+    if (f.from) {
+      const k = (s.t - f.hopAt) / 0.5;
+      if (k >= 1) { f.x = f.to.x; f.y = f.to.y; f.from = null; }
+    } else if (s.t > f.next) {
+      const wet = s.weather === 'rain' || s.weather === 'storm';
+      f.from = { x: f.x, y: f.y };
+      f.to = { x: Math.max(112, Math.min(222, f.x + rand(-28, 28))), y: rand(164, 170) };
+      f.hopAt = s.t;
+      f.next = s.t + (wet ? rand(1.5, 4) : rand(4, 9));
+    }
+    // spider: drops down on its thread, climbs back up
+    const sp = s.spider;
+    if (sp.state === 'wait' && s.t > sp.until) { sp.state = 'move'; sp.ty = sp.y < 24 ? rand(34, 66) : rand(12, 22); sp.fast = false; }
+    else if (sp.state === 'move') {
+      const v = (sp.fast ? 60 : 9) * dt, d = sp.ty - sp.y;
+      if (Math.abs(d) <= v) { sp.y = sp.ty; sp.state = 'wait'; sp.until = s.t + (sp.fast ? rand(8, 14) : rand(3, 9)); }
+      else sp.y += Math.sign(d) * v;
+    }
+    // butiki: darts along the wall, freezes, darts again
+    const z = s.lizard;
+    if (z.state === 'freeze' && s.t > z.until) {
+      z.state = 'crawl'; z.until = s.t + rand(0.5, 1.4);
+      z.tx = Math.max(4, Math.min(262, z.x + rand(-60, 60))); z.ty = Math.max(38, Math.min(128, z.y + rand(-14, 14)));
+    } else if (z.state === 'crawl') {
+      const dx = z.tx - z.x, dy = z.ty - z.y, dist = Math.hypot(dx, dy), v = (z.fast ? 60 : 22) * dt;
+      if (dist < v || s.t > z.until + 2) { z.state = 'freeze'; z.until = s.t + rand(1, 5); z.fast = false; }
+      else { z.x += dx / dist * v; z.y += dy / dist * v; if (Math.abs(dx) > 1) z.dir = dx > 0 ? 1 : -1; }
+    }
+    if (s.weather === 'storm' && s.t > s.nextFlash) { s.flashUntil = s.t + 0.12; s.nextFlash = s.t + rand(5, 14); }
+  }
+
+  function drawMouseHole() {
+    R(77, 132, 4, 1, '#07070c'); R(76, 133, 6, 3, '#07070c'); R(76, 136, 6, 4, '#07070c');
+  }
+
+  function drawLizard() {
+    const z = s.lizard, x = Math.round(z.x), y = Math.round(z.y), d = z.dir;
+    const step = z.state === 'crawl' && Math.floor(s.t * 10) % 2;
+    const c = '#c9b98a', dk = '#8f7f58';
+    R(x, y, 6, 2, c);
+    R(d > 0 ? x + 6 : x - 2, y, 2, 2, '#d8c99a');
+    R(d > 0 ? x + 7 : x - 2, y, 1, 1, '#2a2533');
+    R(d > 0 ? x - 4 : x + 6, y + (step ? 0 : 1), 4, 1, dk);
+    R(d > 0 ? x - 6 : x + 10, y + 1, 2, 1, dk);
+    R(x + 1, step ? y - 1 : y + 2, 1, 1, dk); R(x + 4, step ? y + 2 : y - 1, 1, 1, dk);
+    Object.assign(box('lizard'), { x: x - 5, y: y - 3, w: 18, h: 8 });
+  }
+
+  function drawSpider() {
+    const sp = s.spider, x = 86, y = Math.round(sp.y);
+    R(x + 1, 8, 1, y - 8, '#8d93a388');
+    const k = Math.floor(s.t * 3) % 2;
+    R(x, y, 3, 3, '#2a2533'); R(x + 1, y + 3, 1, 1, '#2a2533');
+    R(x - 2, y + k, 2, 1, '#2a2533'); R(x - 2, y + 2, 2, 1, '#2a2533');
+    R(x + 3, y + k, 2, 1, '#2a2533'); R(x + 3, y + 2, 2, 1, '#2a2533');
+    R(x, y + 1, 1, 1, '#ffffff'); R(x + 2, y + 1, 1, 1, '#ffffff');
+    Object.assign(box('spider'), { x: x - 4, y: y - 3, w: 11, h: 9 });
+  }
+
+  function drawFloorCritters() {
+    // cockroach
+    const r = s.roach;
+    if (r.state !== 'gone') {
+      const x = Math.round(r.x), y = Math.round(r.y), d = r.dir;
+      const k = r.state === 'run' && Math.floor(s.t * 16) % 2;
+      R(x, y, 5, 2, '#6b3a1e'); R(x + 1, y, 2, 1, '#8a4f2c');
+      R(d > 0 ? x + 5 : x - 1, y, 1, 2, '#3a1e10');
+      R(d > 0 ? x + 6 : x - 2, y - 1, 1, 1, '#3a1e10'); R(d > 0 ? x + 7 : x - 3, y - 2, 1, 1, '#3a1e10');
+      for (let i = 0; i < 3; i++) R(x + i * 2, (i + k) % 2 ? y + 2 : y - 1, 1, 1, '#3a1e10');
+      Object.assign(box('roach'), { x: x - 4, y: y - 5, w: 14, h: 11, label: 'Cockroach' });
+    } else box('roach').x = -99;
+    // mouse
+    const m = s.mouse;
+    if (m.state === 'home') box('mouse').x = -99;
+    else {
+      const y = 137, d = m.state === 'peek' ? 1 : m.dir;
+      const x = Math.round(m.state === 'peek' ? 81 : m.x);
+      const body = '#9aa1b0';
+      if (m.state !== 'peek') {
+        R(x, y, 5, 3, body); R(x + 1, y, 3, 1, '#b7bdc9');
+        R(d > 0 ? x - 3 : x + 5, y + 2, 3, 1, '#d8a0a8');
+        if (Math.floor(s.t * 14) % 2) R(x + 1, y + 3, 1, 1, '#6b7183'); else R(x + 3, y + 3, 1, 1, '#6b7183');
+      }
+      const hx = d > 0 ? x + 5 : x - 2;
+      R(hx, y + 1, 2, 2, body); R(d > 0 ? hx + 2 : hx - 1, y + 2, 1, 1, '#d8a0a8');
+      R(d > 0 ? hx : hx + 1, y, 1, 1, '#e8b4bc'); R(d > 0 ? hx + 1 : hx, y + 1, 1, 1, '#0d0f1c');
+      Object.assign(box('mouse'), { x: x - 4, y: y - 3, w: 14, h: 9, label: 'Mouse' });
+    }
+    // frog
+    const f = s.frog;
+    let fx = f.x, fy = f.y, air = false;
+    if (f.from) {
+      const k = Math.min(1, (s.t - f.hopAt) / 0.5);
+      fx = f.from.x + (f.to.x - f.from.x) * k; fy = f.from.y + (f.to.y - f.from.y) * k - Math.sin(k * Math.PI) * 7; air = true;
+    }
+    const x = Math.round(fx), y = Math.round(fy), g = '#5fbf6a';
+    R(x, y + 1, 7, 3, g); R(x + 1, y - 1, 2, 2, '#8be08f'); R(x + 4, y - 1, 2, 2, '#8be08f');
+    R(x + 2, y - 1, 1, 1, '#0d0f1c'); R(x + 4, y - 1, 1, 1, '#0d0f1c');
+    R(x + 2, y + 2, 3, 1, '#c9f5cb');
+    if (air) { R(x - 1, y + 4, 2, 2, '#3f8f4a'); R(x + 6, y + 4, 2, 2, '#3f8f4a'); }
+    else { R(x - 1, y + 3, 2, 1, '#3f8f4a'); R(x + 6, y + 3, 2, 1, '#3f8f4a'); }
+    Object.assign(box('frog'), { x: x - 2, y: y - 3, w: 11, h: 10 });
+  }
+
+  function critterClick(id) {
+    if (id === 'roach') {
+      const r = s.roach; hooks.say?.(sayLine('roach'), r.x + 2, r.y - 4);
+      r.flee = true; r.state = 'run'; r.tx = r.x < W / 2 ? -8 : W + 8; r.ty = r.y; return true;
+    }
+    if (id === 'mouse') {
+      const m = s.mouse; hooks.say?.(sayLine('mouse'), (m.state === 'peek' ? 82 : m.x) + 2, 132);
+      m.state = 'back'; m.tx = 80; m.fast = true; return true;
+    }
+    if (id === 'frog') {
+      const f = s.frog, wet = s.weather === 'rain' || s.weather === 'storm';
+      hooks.say?.(wet ? sayLine('frogRain') : sayLine('frog'), f.x + 3, f.y - 4);
+      f.next = s.t + 0.3; return true;
+    }
+    if (id === 'spider') {
+      const sp = s.spider; hooks.say?.(sayLine('spider'), 88, sp.y - 3);
+      sp.state = 'move'; sp.ty = 12; sp.fast = true; return true;
+    }
+    if (id === 'lizard') {
+      const z = s.lizard; hooks.say?.(sayLine('lizard'), z.x + 3, z.y - 4);
+      z.state = 'crawl'; z.fast = true; z.until = s.t + 1.2;
+      z.tx = Math.max(4, Math.min(310, z.x + (Math.random() < 0.5 ? -70 : 70))); z.ty = z.y; return true;
+    }
+    if (id === 'aircon') {
+      s.ac = !s.ac;
+      hooks.say?.(s.ac ? 'Aircon on. The Iloilo heat stands no chance. ❄' : 'Aircon off. Saving on the electric bill.', 112, 22);
+      return true;
+    }
+    if (id === 'hat') {
+      hooks.say?.(['My lucky straw hat.', 'Every adventure needs a hat.', 'Sun protection for the walk to 7-Eleven.'][Math.floor(Math.random() * 3)], 170, 96);
+      return true;
+    }
+    return false;
+  }
   function drawDog() {
     const g = s.dog;
     const y = 148;
@@ -694,6 +954,7 @@ export function createScene(canvas, hooks = {}) {
   // ---------- behaviour ----------
   function update(dt) {
     s.t += dt;
+    updateCritters(dt);
     s.blinds += (s.blindsTarget - s.blinds) * Math.min(1, dt * 4);
 
     if (s.t > s.nextBlink) { s.blinkUntil = s.t + 0.14; s.nextBlink = s.t + rand(2.5, 5.5); }
@@ -719,7 +980,7 @@ export function createScene(canvas, hooks = {}) {
   }
 
   function draw() {
-    const d = new Date();
+    const d = iloiloNow();
     const { light } = daylight(d);
     drawWall();
     drawWindow(d);
@@ -727,7 +988,10 @@ export function createScene(canvas, hooks = {}) {
     drawCork();
     drawClock(d);
     drawKatanas();
+    drawAircon();
+    drawLizard();
     drawFloor();
+    drawMouseHole();
     drawShelf();
     drawJukebox();
     drawCabinet(d);
@@ -735,6 +999,8 @@ export function createScene(canvas, hooks = {}) {
     drawMark();
     drawDog();
     drawBedFront();
+    drawFloorCritters();
+    drawSpider();
     drawLights(light);
     drawNeon(d);
     drawHearts(1 / 60);
@@ -755,7 +1021,7 @@ export function createScene(canvas, hooks = {}) {
   // ---------- input ----------
   function hit(x, y) {
     // dog first: it walks in front of everything
-    const order = ['dog', 'contact', 'bottle', 'mug', 'jukebox', 'katana', 'mark', 'pc', 'monitors', 'window', 'projects', 'about', 'skills'];
+    const order = ['roach', 'mouse', 'frog', 'spider', 'lizard', 'dog', 'contact', 'bottle', 'mug', 'hat', 'aircon', 'jukebox', 'katana', 'mark', 'pc', 'monitors', 'window', 'projects', 'about', 'skills'];
     for (const id of order) {
       const o = objects.find((ob) => ob.id === id);
       if (x >= o.x && x < o.x + o.w && y >= o.y && y < o.y + o.h) return o;
@@ -763,29 +1029,49 @@ export function createScene(canvas, hooks = {}) {
     return null;
   }
   const MARK_LINES = [
-    'Fixing one more CSS bug… then sleep.',
     'Hi! Click around — everything in here does something.',
+    'Fixing one more CSS bug… then sleep.',
     'Mochi thinks the desk is hers.',
     'Currently shipping WordPress sites with Elementor + ACF.',
     'If the phone rings, that might be you. 📞',
     'Coffee count today: classified.',
+    'It works on my machine. Ship it?',
+    "Pixel-perfect or it didn't happen.",
+    'Did something just run under the desk…?',
+    'Ctrl+S is my love language.',
+    'Clearing the cache… for the third time.',
+    "My code doesn't have bugs. My room does.",
+    'Open to new projects — click the phone!',
+    'Grab a seat. Mochi will judge you, but nicely.',
+    'One more commit and I\'m done. (I am not done.)',
+    'Try clicking the jukebox. I have taste. Mostly.',
   ];
+  function markLine() {
+    const h = iloiloNow().getHours();
+    const wet = s.weather === 'rain' || s.weather === 'storm';
+    if (wet && Math.random() < 0.35) return ['Rain outside, code inside.', 'Perfect weather for coding. And napping.', 'The frog is way too happy about this rain.'][Math.floor(Math.random() * 3)];
+    if ((h >= 23 || h < 4) && Math.random() < 0.35) return ['Late-night coding hits different.', 'Who needs sleep when there is a deadline?'][Math.floor(Math.random() * 2)];
+    if (h >= 5 && h < 9 && Math.random() < 0.35) return 'Good morning! Coffee first, code second.';
+    return MARK_LINES[lineIdx++ % MARK_LINES.length];
+  }
   let lineIdx = 0;
   const KATANA_LINES = ['Three swords. Zero sword skills.', 'Decor only — Mochi is the real guard.', 'Display swords. Please do not debug with them.'];
   let katanaIdx = 0;
 
   function click(o) {
     if (!o) return;
+    if (critterClick(o.id)) return;
     if (o.id === 'window') { s.blindsTarget = s.blindsTarget ? 0 : 1; return; }
     if (o.id === 'dog') {
       const g = s.dog;
-      if (g.state === 'sleep') { g.state = 'idle'; g.until = s.t + 5; hooks.say?.('*yawn*', g.x + 9, 140); }
-      else { hooks.say?.('Arf!', g.x + 9, 140); g.state = 'idle'; g.until = s.t + 5; }
+      const pick = (a) => a[Math.floor(Math.random() * a.length)];
+      if (g.state === 'sleep') { g.state = 'idle'; g.until = s.t + 5; hooks.say?.(pick(['*yawn*', 'Five more minutes…', 'Was I snoring?']), g.x + 9, 140); }
+      else { hooks.say?.(pick(['Arf!', 'Woof! (pet me)', '*wag wag wag*', 'Did someone say treats?', 'I guard this room. Mostly from naps.']), g.x + 9, 140); g.state = 'idle'; g.until = s.t + 5; }
       for (let i = 0; i < 3; i++) s.hearts.push({ x: g.x + 4 + i * 4, y: 142 - i * 3, life: 1.2 });
       return;
     }
     if (o.id === 'mark') {
-      hooks.say?.(MARK_LINES[lineIdx++ % MARK_LINES.length], 170, 58);
+      hooks.say?.(markLine(), 170, 58);
       return;
     }
     if (o.id === 'katana') { hooks.say?.(KATANA_LINES[katanaIdx++ % KATANA_LINES.length], 226, 40); return; }
@@ -802,6 +1088,8 @@ export function createScene(canvas, hooks = {}) {
     click,
     setHover(id) { s.hover = id; },
     setMusic(on) { s.music = on; },
+    setWeather(w) { s.weather = w; },
+    get weather() { return s.weather; },
     toggleBlinds() { s.blindsTarget = s.blindsTarget ? 0 : 1; },
   };
 }
@@ -810,5 +1098,5 @@ export function createScene(canvas, hooks = {}) {
 function mix(a, b, k) {
   const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
   const ch = (sh) => Math.round(((pa >> sh) & 255) * (1 - k) + ((pb >> sh) & 255) * k);
-  return `rgb(${ch(16)},${ch(8)},${ch(0)})`;
+  return '#' + ((1 << 24) | (ch(16) << 16) | (ch(8) << 8) | ch(0)).toString(16).slice(1);
 }

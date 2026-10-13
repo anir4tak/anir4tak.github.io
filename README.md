@@ -8,13 +8,17 @@
 | PC tower | Cycles the RGB lighting |
 | Cork board | About me |
 | Bookshelf | Skills |
-| Teal phone | Contact (it rings now and then) |
-| Window | Opens and closes the blind. The sky follows *your* local time. |
+| Phone | Contact (it rings now and then) |
+| Window | Opens and closes the blind. Shows Iloilo's time of day and its real weather (rain, storms, clouds, fog). |
 | Topz | Says something |
 | Mochi | Wakes up, or says hi |
-| Jukebox | Plays my Spotify playlists. While music plays, the jukebox lights up and Topz nods along. |
+| Jukebox | Shows what Topz is listening to right now (see `worker/README.md`), and plays his playlists. While music plays, the jukebox lights up and Topz nods along. |
 | Katana rack | Three display swords (original designs) |
 | Mug | This MEETING should have been an EMAIL |
+| Water bottle | Topz takes a sip (he also does on his own) |
+| Aircon | On/off |
+| Straw hat | Hangs on the chair; says something |
+| Cockroach, mouse, frog, spider, butiki | They roam the room. Click them. |
 
 The buttons under the room (or keys **1–5**) open the same panels, so everything works without hunting.
 

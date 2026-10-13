@@ -1,5 +1,5 @@
 import { createScene, W, H } from './scene.js';
-import { PROFILE, ABOUT, SKILLS, PROJECTS, CONTACT, STATUS, SPOTIFY } from './content.js';
+import { PROFILE, ABOUT, SKILLS, PROJECTS, CONTACT, STATUS, SPOTIFY, NOW_PLAYING_URL, WEATHER_AT } from './content.js';
 
 const stage = document.getElementById('stage');
 const canvas = document.getElementById('room');
@@ -58,6 +58,7 @@ const scene = createScene(canvas, {
     bubble.textContent = text;
     bubble.style.left = `${x * scale}px`;
     bubble.style.top = `${y * scale}px`;
+    bubble.classList.toggle('below', y < 34); // near the ceiling: show it underneath
     bubble.hidden = false;
     clearTimeout(bubbleTimer);
     bubbleTimer = setTimeout(() => (bubble.hidden = true), 3200);
@@ -139,7 +140,7 @@ function openPanel(id) {
   // the other panels share one body that is rebuilt each time
   jukebox.hidden = !isJukebox;
   panelBody.hidden = isJukebox;
-  if (isJukebox) setupJukebox();
+  if (isJukebox) { setupJukebox(); renderNowPlaying(); }
   else { panelBody.innerHTML = p.html; panelBody.scrollTop = 0; }
   document.querySelectorAll('.slot').forEach((b) => b.classList.toggle('active', b.dataset.open === id));
   if (!dialog.open) dialog.showModal();
@@ -207,16 +208,67 @@ let si = 0;
 let musicOn = false;
 const _setMusic = scene.setMusic;
 scene.setMusic = (on) => { musicOn = on; _setMusic(on); tick(); };
+
+// ---------- real weather in the window ----------
+let weather = 'clear';
+const WEATHER_TEXT = { rain: "It's raining in Iloilo 🌧", storm: 'Thunderstorm over Iloilo ⛈', cloudy: 'Cloudy skies over Iloilo ☁', fog: 'Foggy in Iloilo 🌫', clear: '' };
+async function loadWeather() {
+  try {
+    const u = `https://api.open-meteo.com/v1/forecast?latitude=${WEATHER_AT.lat}&longitude=${WEATHER_AT.lon}&current=weather_code,cloud_cover,precipitation`;
+    const { current: c } = await (await fetch(u)).json();
+    const code = c.weather_code;
+    weather = code >= 95 ? 'storm'
+      : (code >= 51 && code <= 67) || (code >= 80 && code <= 82) || c.precipitation > 0.1 ? 'rain'
+      : code === 45 || code === 48 ? 'fog'
+      : code === 3 || c.cloud_cover > 75 ? 'cloudy' : 'clear';
+  } catch { /* offline or blocked: keep the last known sky */ }
+  if (location.hash.startsWith('#weather=')) weather = location.hash.slice(9); // for testing: #weather=rain
+  scene.setWeather(weather);
+  tick();
+}
+
+// ---------- what Topz is listening to right now ----------
+let nowPlaying = null; // { title, artist, url, image } while something plays
+async function loadNowPlaying() {
+  if (!NOW_PLAYING_URL) { nowPlaying = null; renderNowPlaying(); return; }
+  try {
+    const r = await (await fetch(NOW_PLAYING_URL, { cache: 'no-store' })).json();
+    nowPlaying = r && r.isPlaying ? r : null;
+  } catch { nowPlaying = null; }
+  _setMusic(musicOn || !!nowPlaying);
+  renderNowPlaying();
+  tick();
+}
+function renderNowPlaying() {
+  const el = document.getElementById('now-playing');
+  if (!el) return;
+  el.innerHTML = nowPlaying
+    ? `<a href="${nowPlaying.url}" target="_blank" rel="noopener noreferrer">
+         ${nowPlaying.image ? `<img src="${nowPlaying.image}" alt="">` : ''}
+         <span><small>Topz is listening to</small><b>${esc(nowPlaying.title)}</b><em>${esc(nowPlaying.artist)}</em></span>
+         <i class="eq" aria-hidden="true"><s></s><s></s><s></s></i></a>`
+    : `<p><span class="dot"></span>Topz is not listening to anything right now. Pick a playlist below.</p>`;
+}
+
 function tick() {
   const t = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', timeZone: PROFILE.timezone }).format(new Date());
   const h = +new Intl.DateTimeFormat('en-US', { hour: 'numeric', hourCycle: 'h23', timeZone: PROFILE.timezone }).format(new Date());
-  const line = musicOn ? `♪ Jukebox is playing “${SPOTIFY.playlists[current].name}”`
-    : h >= 2 && h < 8 ? 'Topz is probably asleep (the dog is not)' : STATUS[si % STATUS.length];
-  status.textContent = `${line} · ${t} in Iloilo`;
+  // rotate through what's going on in the room
+  const lines = [];
+  if (nowPlaying) lines.push(`♪ Topz is listening to “${nowPlaying.title}” by ${nowPlaying.artist}`);
+  else if (musicOn) lines.push(`♪ Jukebox is playing “${SPOTIFY.playlists[current].name}”`);
+  else lines.push('Topz is not listening to anything right now');
+  if (WEATHER_TEXT[weather]) lines.push(WEATHER_TEXT[weather]);
+  lines.push(h >= 2 && h < 8 ? 'Topz is probably asleep (the dog is not)' : STATUS[si % STATUS.length]);
+  status.textContent = `${lines[si % lines.length]} · ${t} in Iloilo`;
 }
 tick();
+loadWeather();
+loadNowPlaying();
 setInterval(tick, 30_000);
-setInterval(() => { si++; tick(); }, 9_000);
+setInterval(() => { si++; tick(); }, 7_000);
+setInterval(loadWeather, 10 * 60_000);
+setInterval(loadNowPlaying, 30_000);
 
 fit();
 checkRotate();

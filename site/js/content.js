@@ -77,3 +77,11 @@ export const SPOTIFY = {
     { name: 'Anime Songs', id: '7JHlw8fOfnkwJw0L43VBGD' },
   ],
 };
+
+// "now playing" on the jukebox. Spotify only tells a server with Topz's own
+// login what he is listening to, so this points at a tiny worker
+// (see worker/README.md). Leave it empty and the room says he isn't listening.
+export const NOW_PLAYING_URL = '';
+
+// the window shows the real weather here (Open-Meteo, no key needed)
+export const WEATHER_AT = { name: 'Iloilo', lat: 10.72, lon: 122.56 };
