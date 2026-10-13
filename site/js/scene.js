@@ -987,22 +987,40 @@ export function createScene(canvas, hooks = {}) {
     c.open += (c.target - c.open) * Math.min(1, dt * 10);
     const x = 270, y = 154;
     const open = c.open > 0.5;
-    // glow from inside
-    if (open) { ctx.fillStyle = 'rgba(255,214,107,0.25)'; ctx.fillRect(x - 2, y - 14, 30, 16); }
-    // lid: closed sits on top, open flips up behind
+    // rose-painted wood, silver bands with rivets, gold studs, heaped with coins
+    const wood = '#a5636a', woodL = '#bb7a7f', woodD = '#7f474d', band = '#a9afbd', bandL = '#d4d8e0', rivet = '#6b7183';
+    const grain = (gx, gy, gw, gh) => { for (let j = gy + 2; j < gy + gh; j += 3) R(gx, j, gw, 1, woodD); };
+    if (open) { ctx.fillStyle = 'rgba(255,214,107,0.22)'; ctx.fillRect(x - 2, y - 16, 30, 18); }
     if (open) {
-      R(x + 1, y - 9, 24, 8, '#6b4430'); R(x + 1, y - 9, 24, 1, '#8a5a3c');
-      R(x + 3, y - 7, 20, 5, '#4a2f20'); R(x + 1, y - 2, 24, 2, '#c9a227');
+      // lid swung back: we see its rounded top edge behind the coins
+      R(x + 1, y - 12, 24, 10, wood); R(x + 2, y - 13, 22, 1, woodL); grain(x + 1, y - 12, 24, 10);
+      R(x, y - 12, 1, 10, band); R(x + 25, y - 12, 1, 10, band);
+      R(x + 6, y - 13, 2, 11, band); R(x + 18, y - 13, 2, 11, band);
+      R(x + 1, y - 3, 24, 1, band);
     }
     // body
-    R(x, y, 26, 14, '#8a5a3c'); R(x, y, 26, 1, '#a8714c');
-    R(x, y + 4, 26, 1, '#6b4430'); R(x, y + 9, 26, 1, '#6b4430');
-    R(x + 3, y, 2, 14, '#c9a227'); R(x + 21, y, 2, 14, '#c9a227');
-    if (open) { R(x + 2, y, 22, 3, '#f2c14e'); R(x + 5, y, 3, 1, '#fff3b0'); R(x + 15, y + 1, 2, 1, '#fff3b0'); }
-    else {
-      R(x - 1, y - 5, 28, 6, '#8a5a3c'); R(x, y - 6, 26, 1, '#a8714c'); R(x + 1, y - 7, 24, 1, '#8a5a3c');
-      R(x + 3, y - 7, 2, 7, '#c9a227'); R(x + 21, y - 7, 2, 7, '#c9a227');
-      R(x + 11, y - 2, 4, 5, '#c9a227'); R(x + 12, y, 2, 2, '#4a2f20');
+    R(x, y, 26, 14, wood); R(x, y, 26, 1, woodL); grain(x + 1, y, 24, 14);
+    R(x, y, 1, 14, band); R(x + 25, y, 1, 14, band); R(x, y + 13, 26, 1, band); R(x, y, 26, 1, band);
+    for (let i = 2; i < 26; i += 3) R(x + i, y + 13, 1, 1, rivet);
+    for (let j = 2; j < 13; j += 3) { R(x, y + j, 1, 1, rivet); R(x + 25, y + j, 1, 1, rivet); }
+    // silver lock plate
+    R(x + 11, y + 3, 4, 5, band); R(x + 11, y + 3, 4, 1, bandL); R(x + 12, y + 5, 2, 2, rivet);
+    if (open) {
+      // the hoard: gold coins, a blue gem, a pearl
+      R(x + 1, y - 2, 24, 3, '#c9972c'); R(x + 2, y - 3, 21, 1, '#f2c14e');
+      for (let i = 0; i < 7; i++) { const cx = x + 2 + i * 3 + (i % 2); R(cx, y - 3 + (i % 2), 2, 1, '#f6d365'); R(cx, y - 2 + (i % 2), 1, 1, '#fff3b0'); }
+      R(x + 9, y - 3, 2, 2, '#4fb3e8'); R(x + 9, y - 3, 1, 1, '#bfe8ff');
+      R(x + 16, y - 3, 2, 2, '#f4f6fb');
+    } else {
+      // domed lid
+      R(x + 1, y - 9, 24, 9, wood); R(x + 2, y - 10, 22, 1, wood); R(x + 3, y - 11, 20, 1, woodL);
+      R(x + 2, y - 9, 22, 1, woodL); grain(x + 1, y - 9, 24, 9);
+      R(x, y - 9, 1, 9, band); R(x + 25, y - 9, 1, 9, band); R(x + 1, y - 10, 1, 1, band); R(x + 24, y - 10, 1, 1, band);
+      R(x + 2, y - 11, 1, 1, band); R(x + 23, y - 11, 1, 1, band); R(x + 3, y - 12, 20, 1, band);
+      R(x + 6, y - 12, 2, 12, band); R(x + 18, y - 12, 2, 12, band); R(x + 6, y - 12, 1, 12, bandL); R(x + 18, y - 12, 1, 12, bandL);
+      R(x, y - 1, 26, 1, band);
+      // three gold studs along the lid front
+      for (const sx of [x + 2, x + 11, x + 21]) { R(sx, y - 5, 3, 3, '#c9972c'); R(sx, y - 5, 2, 2, '#f2c14e'); R(sx + 1, y - 4, 1, 1, '#fff3b0'); }
     }
     R(x + 1, y + 14, 24, 1, '#2b1d20');
     // the find floats up and bobs
@@ -1018,7 +1036,7 @@ export function createScene(canvas, hooks = {}) {
       p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 30 * dt;
       R(p.x, p.y, 1, 1, p.life > 0.4 ? '#fff3b0' : '#f2c14e');
     }
-    box('chest').y = open ? 140 : 146;
+    box('chest').y = open ? 138 : 140;
   }
   function drawDog() {
     const g = s.dog;
