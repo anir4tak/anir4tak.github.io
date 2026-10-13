@@ -54,6 +54,7 @@ document.getElementById('rotate-skip').addEventListener('click', () => {
 let bubbleTimer;
 const scene = createScene(canvas, {
   open: openPanel,
+  photo(item) { showPhoto(item); },
   say(text, x, y) {
     bubble.textContent = text;
     bubble.style.left = `${Math.max(70, Math.min(250, x)) * scale}px`; // keep it inside the room
@@ -119,6 +120,21 @@ const PANELS = {
       </ul>`,
   }),
 };
+
+// a real photo found in the chest, shown in the panel
+function showPhoto(item) {
+  lastFocus = document.activeElement;
+  panelTitle.textContent = item.title;
+  jukebox.hidden = true;
+  panelBody.hidden = false;
+  panelBody.innerHTML = `
+    <figure class="photo">
+      <img src="${item.photo}" alt="${esc(item.caption)}">
+      <figcaption>${esc(item.caption)}</figcaption>
+    </figure>`;
+  panelBody.scrollTop = 0;
+  if (!dialog.open) dialog.showModal();
+}
 
 let lastFocus = null;
 const jukebox = document.getElementById('jukebox');

@@ -918,6 +918,13 @@ export function createScene(canvas, hooks = {}) {
   // ---------- treasure chest ----------
   // each find: how to draw it (10×10 at x,y) and what Topz says about it
   const LOOT = [
+    // a real photo from Topz's shelf: the find is a little framed photo, the card shows the real thing
+    { name: 'poneglyph-photo', photo: 'assets/collection/poneglyph.webp', title: "From Topz's shelf",
+      caption: 'My poneglyph replica. Every face is covered in glyphs. Can anyone read it?',
+      say: "A photo from my shelf! My poneglyph replica.", draw: (x, y) => {
+      R(x, y, 10, 10, '#f4f6fb'); R(x + 1, y + 1, 8, 6, '#c9a456'); R(x + 2, y + 2, 6, 4, '#a8853e');
+      for (let i = 0; i < 3; i++) R(x + 2 + i * 2, y + 3, 1, 2, '#5a4520');
+      R(x + 4, y - 1, 2, 2, '#e05a5a'); } },
     { name: 'gold', say: "A pile of gold! …it's chocolate. Still counts.", draw: (x, y) => {
       R(x + 1, y + 6, 8, 3, '#c9972c'); R(x + 2, y + 4, 6, 2, '#f2c14e'); R(x + 3, y + 2, 4, 2, '#f6d365');
       R(x + 4, y + 3, 1, 1, '#fff3b0'); R(x + 2, y + 7, 1, 1, '#fff3b0'); R(x + 6, y + 6, 1, 1, '#fff3b0'); } },
@@ -967,7 +974,10 @@ export function createScene(canvas, hooks = {}) {
     if (c.target === 1 && s.t < c.closeAt) return; // still showing the last find
     // the golden duck is rare; never the same find twice in a row
     let i;
-    do {
+    // real photos from the shelf turn up about a third of the time
+    const photos = LOOT.map((l, k) => (l.photo ? k : -1)).filter((k) => k >= 0 && k !== c.last);
+    if (photos.length && Math.random() < 0.33) i = photos[Math.floor(Math.random() * photos.length)];
+    else do {
       i = Math.floor(Math.random() * LOOT.length);
       if (LOOT[i].rare && Math.random() > 0.25) i = c.last;
     } while (i === c.last);
@@ -978,6 +988,7 @@ export function createScene(canvas, hooks = {}) {
     c.closeAt = s.t + 5;
     for (let k = 0; k < 14; k++) c.sparks.push({ x: 283 + rand(-8, 8), y: 152, vx: rand(-14, 14), vy: rand(-30, -12), life: rand(0.6, 1.2) });
     setTimeout(() => hooks.say?.(c.item.say, 283, 128), 380);
+    if (c.item.photo) setTimeout(() => hooks.photo?.(c.item), 1300);
     if (c.item.name === 'bone') { const g = s.dog; g.state = 'walk'; g.target = 236; }
   }
 
