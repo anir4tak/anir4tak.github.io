@@ -918,13 +918,6 @@ export function createScene(canvas, hooks = {}) {
   // ---------- treasure chest ----------
   // each find: how to draw it (10×10 at x,y) and what Topz says about it
   const LOOT = [
-    // a real photo from Topz's shelf: the find is a little framed photo, the card shows the real thing
-    { name: 'poneglyph-photo', photo: 'assets/collection/poneglyph.webp', title: "From Topz's shelf",
-      caption: 'My poneglyph replica. Every face is covered in glyphs. Can anyone read it?',
-      say: "A photo from my shelf! My poneglyph replica.", draw: (x, y) => {
-      R(x, y, 10, 10, '#f4f6fb'); R(x + 1, y + 1, 8, 6, '#c9a456'); R(x + 2, y + 2, 6, 4, '#a8853e');
-      for (let i = 0; i < 3; i++) R(x + 2 + i * 2, y + 3, 1, 2, '#5a4520');
-      R(x + 4, y - 1, 2, 2, '#e05a5a'); } },
     { name: 'gold', say: "A pile of gold! …it's chocolate. Still counts.", draw: (x, y) => {
       R(x + 1, y + 6, 8, 3, '#c9972c'); R(x + 2, y + 4, 6, 2, '#f2c14e'); R(x + 3, y + 2, 4, 2, '#f6d365');
       R(x + 4, y + 3, 1, 1, '#fff3b0'); R(x + 2, y + 7, 1, 1, '#fff3b0'); R(x + 6, y + 6, 1, 1, '#fff3b0'); } },
@@ -969,6 +962,16 @@ export function createScene(canvas, hooks = {}) {
       R(x + 3, y + 3, 1, 5, '#e48a8a'); R(x + 5, y + 2, 1, 6, '#e48a8a'); R(x + 7, y + 3, 1, 5, '#e48a8a'); } },
   ];
 
+  // real photos from Topz's shelf: the find is a little framed photo, a card shows the real thing
+  const FRAME_TINTS = ['#e05a5a', '#2bbecb', '#f6d365', '#8a7bd8', '#4caf6a'];
+  (hooks.photos || []).forEach((p, n) => LOOT.push({
+    name: `photo-${p.file}`, photo: `assets/collection/${p.file}.webp`, title: "From Topz's shelf", caption: p.caption, say: p.say,
+    draw: (x, y) => {
+      R(x, y, 10, 10, '#f4f6fb'); R(x + 1, y + 1, 8, 6, '#9fb4c8'); R(x + 1, y + 5, 8, 2, '#c9a456');
+      R(x + 3, y + 2, 3, 4, FRAME_TINTS[n % FRAME_TINTS.length]); R(x + 4, y - 1, 2, 2, '#e05a5a');
+    },
+  }));
+
   function openChest() {
     const c = s.chest;
     if (c.target === 1 && s.t < c.closeAt) return; // still showing the last find
@@ -976,7 +979,7 @@ export function createScene(canvas, hooks = {}) {
     let i;
     // real photos from the shelf turn up about a third of the time
     const photos = LOOT.map((l, k) => (l.photo ? k : -1)).filter((k) => k >= 0 && k !== c.last);
-    if (photos.length && Math.random() < 0.33) i = photos[Math.floor(Math.random() * photos.length)];
+    if (photos.length && Math.random() < 0.5) i = photos[Math.floor(Math.random() * photos.length)];
     else do {
       i = Math.floor(Math.random() * LOOT.length);
       if (LOOT[i].rare && Math.random() > 0.25) i = c.last;
