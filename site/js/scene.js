@@ -11,7 +11,7 @@ const C = {
   floorA: '#3d2a2c', floorB: '#45302f', floorLine: '#2b1d20', floorShine: '#54393a',
   wood: '#8a5a3c', woodLight: '#a8714c', woodDark: '#5e3b28', woodDeep: '#43291c',
   teal: '#2bbecb', tealLight: '#7ff3ff', tealDark: '#17707a',
-  hoodie: '#2a8f99', hoodieLight: '#3fb0ba', hoodieDark: '#1d6870',
+  hoodie: '#d9dde6', hoodieLight: '#f4f6fa', hoodieDark: '#9aa1b0', hood: '#8a90a0',
   skin: '#c98a5e', skinShade: '#a96e48', hair: '#15121c', hairLight: '#2c2742',
   chair: '#12141f', chairLight: '#1f2333',
   white: '#e9edf5', grey: '#9aa3b5', greyDark: '#5d6578',
@@ -124,6 +124,7 @@ export function createScene(canvas, hooks = {}) {
     blinds: 0, blindsTarget: 0,          // 0 open, 1 closed
     blinkUntil: 0, nextBlink: 2,
     stretchUntil: 0, nextStretch: rand(14, 24),
+    drinkStart: -10, drinkUntil: 0, nextDrink: rand(18, 30),
     ringUntil: 0, nextRing: rand(25, 45),
     neonOffUntil: 0, nextFlicker: rand(6, 14),
     hearts: [],
@@ -144,6 +145,7 @@ export function createScene(canvas, hooks = {}) {
     { id: 'mark', label: 'Mark', x: 146, y: 62, w: 48, h: 86 },
     { id: 'monitors', label: 'Projects · on screen', x: 126, y: 72, w: 88, h: 38 },
     { id: 'pc', label: 'PC · change the RGB', x: 216, y: 70, w: 24, h: 42 },
+    { id: 'bottle', label: 'Water bottle · take a sip', x: 194, y: 96, w: 8, h: 15 },
     { id: 'mug', label: 'Mug · "This MEETING should have been an EMAIL"', x: 112, y: 98, w: 13, h: 13 },
     { id: 'dog', label: 'Mochi', x: 0, y: 0, w: 18, h: 14 },
   ];
@@ -434,6 +436,10 @@ export function createScene(canvas, hooks = {}) {
     R(106, 120, 2, 30, C.woodDeep); R(232, 120, 2, 30, C.woodDeep);
     drawMonitors(dl);
     s.pcColor = drawPC();
+    // water bottle, in front of the right monitor (unless Mark is drinking from it)
+    if (s.t >= s.drinkUntil) {
+      R(196, 100, 4, 10, '#cfe4ea'); R(197, 103, 2, 6, '#9fc9d3'); R(196, 98, 4, 2, '#8a90a0'); R(196, 100, 1, 10, '#eef7fa');
+    }
     // lamp, far left, leaning over the desk
     R(99, 107, 12, 3, '#3a3f58'); R(104, 90, 2, 17, '#3a3f58');
     R(104, 88, 9, 2, '#3a3f58'); R(110, 84, 10, 5, C.teal); R(111, 89, 8, 1, '#fff6c8');
@@ -467,40 +473,87 @@ export function createScene(canvas, hooks = {}) {
   ];
   const headBackPal = { P: C.teal, p: C.tealDark, h: C.hair, H: C.hairLight, s: C.skin, S: C.skinShade };
 
-  function drawMark() {
-    const stretching = s.t < s.stretchUntil;
-    const tap = !stretching && Math.floor(s.t * 6) % 2;
-    const look = s.t % 14 > 9 ? 1 : 0; // glances at the right monitor now and then
+  // the chair swivels gently; Mark and the chair back ride along, the wheels stay put
+  function swivel() {
+    if (reduced) return 0;
+    return Math.round(Math.sin(s.t * 0.9) * 1.6 + Math.sin(s.t * 0.37) * 0.8);
+  }
 
+  function drawMark() {
+    const drinking = s.t < s.drinkUntil;
+    const stretching = !drinking && s.t < s.stretchUntil;
+    const tap = !stretching && !drinking && Math.floor(s.t * 6) % 2;
+    const look = drinking ? 0 : s.t % 14 > 9 ? 1 : 0; // glances at the right monitor now and then
+    const sw = swivel();
+
+    // star base and gas lift don't turn
+    R(168, 132, 4, 12, '#2b2f40');
+    R(154, 144, 32, 2, '#2b2f40'); R(152, 146, 3, 3, '#0b0c14'); R(185, 146, 3, 3, '#0b0c14'); R(168, 146, 4, 3, '#0b0c14');
+
+    ctx.save();
+    ctx.translate(sw, 0);
     // back and shoulders: sloped, with arms reaching forward to the keyboard
     const by = tap ? 1 : 0;
     R(160, 85 + by, 20, 2, C.hoodie); R(155, 87 + by, 30, 2, C.hoodie); R(151, 89 + by, 38, 22, C.hoodie);
     R(160, 85 + by, 20, 1, C.hoodieLight); R(155, 87 + by, 5, 1, C.hoodieLight); R(180, 87 + by, 5, 1, C.hoodieLight);
     R(151, 89 + by, 2, 22, C.hoodieDark); R(187, 89 + by, 2, 22, C.hoodieDark);
+    R(169, 92 + by, 2, 16, C.hoodieDark); // back seam
     if (stretching) {
       R(149, 58, 6, 33, C.hoodie); R(185, 58, 6, 33, C.hoodie);
       R(149, 58, 1, 33, C.hoodieDark); R(190, 58, 1, 33, C.hoodieDark);
       R(150, 53, 5, 5, C.skin); R(185, 53, 5, 5, C.skin);
     } else {
-      R(146, 94 - tap, 6, 14, C.hoodie); R(188, 94 + tap, 6, 14, C.hoodie);
-      R(146, 94 - tap, 1, 14, C.hoodieDark); R(193, 94 + tap, 1, 14, C.hoodieDark);
-      R(147, 107 - tap, 5, 2, C.hoodieDark); R(188, 107 + tap, 5, 2, C.hoodieDark);
+      R(146, 94 - tap, 6, 14, C.hoodie); R(146, 94 - tap, 1, 14, C.hoodieDark); R(147, 107 - tap, 5, 2, C.hoodieDark);
+      if (!drinking) { R(188, 94 + tap, 6, 14, C.hoodie); R(193, 94 + tap, 1, 14, C.hoodieDark); R(188, 107 + tap, 5, 2, C.hoodieDark); }
     }
     // hood bunched at the neck
-    R(161, 80, 18, 7, C.hoodieDark); R(163, 79, 14, 2, C.hoodie); R(164, 86, 12, 2, C.hoodieDark);
-    const nod = s.music && Math.floor(s.t * 4) % 2 ? 1 : 0;
-    sprite(HEAD_BACK, headBackPal, 162 + look, 64 + nod);
-    R(166 + look, 64 + nod, 8, 1, '#3a3456');
+    R(161, 80, 18, 7, C.hood); R(163, 79, 14, 2, C.hoodieDark); R(164, 86, 12, 2, C.hood);
+    const nod = s.music && !drinking && Math.floor(s.t * 4) % 2 ? 1 : 0;
+    const tilt = drinking ? -1 : 0; // head tips back to drink
+    sprite(HEAD_BACK, headBackPal, 162 + look, 64 + nod + tilt);
+    R(166 + look, 64 + nod + tilt, 8, 1, '#3a3456');
+    if (drinking) drawSip();
 
     // chair back (low enough to see Mark's shoulders over it)
     R(156, 96, 28, 32, C.chair); R(158, 94, 24, 3, C.chair);
     R(159, 98, 2, 26, '#2b2f40'); R(179, 98, 2, 26, '#2b2f40');
     R(166, 104, 8, 6, C.chairLight);
     R(156, 126, 28, 4, '#0b0c14');
-    // seat edge, gas lift, star base
-    R(150, 128, 40, 4, C.chair); R(168, 132, 4, 12, '#2b2f40');
-    R(154, 144, 32, 2, '#2b2f40'); R(152, 146, 3, 3, '#0b0c14'); R(185, 146, 3, 3, '#0b0c14'); R(168, 146, 4, 3, '#0b0c14');
+    R(150, 128, 40, 4, C.chair);
+    ctx.restore();
   }
+
+  // right arm up, bottle tipped to his mouth
+  function drawSip() {
+    const k = (s.t - s.drinkStart) / (s.drinkUntil - s.drinkStart);
+    const up = k < 0.15 ? k / 0.15 : k > 0.85 ? (1 - k) / 0.15 : 1; // raise, hold, lower
+    const ay = Math.round(94 - up * 26);
+    R(186, ay, 6, 108 - ay, C.hoodie); R(191, ay, 1, 108 - ay, C.hoodieDark);
+    R(185, ay - 3, 5, 4, C.skin);
+    // the bottle, tilting further as he drinks
+    const tip = up > 0.9 ? 2 : 1;
+    const bx = 181 - tip, by2 = ay - 9;
+    R(bx, by2, 4, 9, '#cfe4ea'); R(bx + 1, by2 + 3, 2, 5, '#9fc9d3');
+    R(bx - tip, by2 - 2, 4, 2, '#8a90a0');
+    if (up > 0.9 && Math.floor(s.t * 6) % 2) R(bx - tip - 1, by2 + 1, 1, 1, '#ffffff');
+  }
+
+  const DRINK_LINES = [
+    'Water break. Recharging… 💧',
+    '+10 HP.',
+    'Hydrate, then debug.',
+    'Ahh. Back to the bugs.',
+    'Reminder: drink some water too!',
+  ];
+  let drinkIdx = 0;
+  function startDrink() {
+    if (s.t < s.drinkUntil) return;
+    s.drinkStart = s.t;
+    s.drinkUntil = s.t + 3.2;
+    s.nextDrink = s.t + rand(40, 70);
+    hooks.say?.(DRINK_LINES[drinkIdx++ % DRINK_LINES.length], 170, 50);
+  }
+
 
   function drawLights(dl) {
     // the room darkens with the outside light; the lamp, neon, screens and PC push back
@@ -640,7 +693,8 @@ export function createScene(canvas, hooks = {}) {
     s.blinds += (s.blindsTarget - s.blinds) * Math.min(1, dt * 4);
 
     if (s.t > s.nextBlink) { s.blinkUntil = s.t + 0.14; s.nextBlink = s.t + rand(2.5, 5.5); }
-    if (s.t > s.nextStretch) { s.stretchUntil = s.t + 1.8; s.nextStretch = s.t + rand(25, 45); }
+    if (s.t > s.nextStretch && s.t > s.drinkUntil) { s.stretchUntil = s.t + 1.8; s.nextStretch = s.t + rand(25, 45); }
+    if (s.t > s.nextDrink && s.t > s.stretchUntil) startDrink();
     if (s.t > s.nextRing) { s.ringUntil = s.t + 3; s.nextRing = s.t + rand(50, 90); }
     if (s.t > s.nextFlicker) { s.neonOffUntil = s.t + rand(0.08, 0.3); s.nextFlicker = s.t + rand(5, 16); }
 
@@ -697,7 +751,7 @@ export function createScene(canvas, hooks = {}) {
   // ---------- input ----------
   function hit(x, y) {
     // dog first: it walks in front of everything
-    const order = ['dog', 'contact', 'mug', 'jukebox', 'katana', 'mark', 'pc', 'monitors', 'window', 'projects', 'about', 'skills'];
+    const order = ['dog', 'contact', 'bottle', 'mug', 'jukebox', 'katana', 'mark', 'pc', 'monitors', 'window', 'projects', 'about', 'skills'];
     for (const id of order) {
       const o = objects.find((ob) => ob.id === id);
       if (x >= o.x && x < o.x + o.w && y >= o.y && y < o.y + o.h) return o;
@@ -731,6 +785,7 @@ export function createScene(canvas, hooks = {}) {
       return;
     }
     if (o.id === 'katana') { hooks.say?.(KATANA_LINES[katanaIdx++ % KATANA_LINES.length], 226, 40); return; }
+    if (o.id === 'bottle') { startDrink(); return; }
     if (o.id === 'mug') { hooks.say?.('This MEETING should have been an EMAIL', 118, 96); return; }
     if (o.id === 'pc') { s.rgbMode = (s.rgbMode + 1) % (RGB.length + 1); return; }
     if (o.id === 'contact') s.ringUntil = 0;
