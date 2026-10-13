@@ -151,6 +151,7 @@ export function createScene(canvas, hooks = {}) {
     ac: true,
     bulb: false, bulbGlow: 0,
     squeeze: { at: -10, count: 0 }, // the stress-ball alien
+    hold: { start: -10, until: 0, next: rand(30, 50) }, // Topz picks it up and squeezes it
     chest: { open: 0, target: 0, item: null, itemAt: 0, closeAt: 0, last: -1, sparks: [] },
     roach: { x: 200, y: 170, tx: 200, ty: 170, state: 'wait', until: rand(3, 8), dir: 1, flee: false },
     mouse: { state: 'home', x: 82, dir: 1, until: rand(10, 20), tx: 82 },
@@ -508,8 +509,32 @@ export function createScene(canvas, hooks = {}) {
 
   // ---------- stress ball alien, beside the mug ----------
   const ALIEN_CX = 81, ALIEN_FLOOR = 110;
+  const HOLD_DUR = 3.6;
+  const holding = () => s.t < s.hold.until;
+  const ease = (k) => k * k * (3 - 2 * k);
+  // where the alien is right now: on the desk, travelling, or in Topz's left hand
+  function alienPos() {
+    const desk = { cx: ALIEN_CX, floor: ALIEN_FLOOR };
+    if (!holding()) return { ...desk, held: false };
+    const u = (s.t - s.hold.start) / HOLD_DUR;
+    const hand = { cx: 112 + Math.round(s.chair.x), floor: 96 };
+    const k = u < 0.18 ? ease(u / 0.18) : u > 0.84 ? 1 - ease((u - 0.84) / 0.16) : 1;
+    const arc = Math.sin(k * Math.PI) * 6; // lifted up and over, not dragged
+    return {
+      cx: Math.round(desk.cx + (hand.cx - desk.cx) * k),
+      floor: Math.round(desk.floor + (hand.floor - desk.floor) * k - arc),
+      held: true, u, k,
+    };
+  }
   function squish() {
-    // fast squash, a hold, then a wobbly bounce back
+    if (holding()) {
+      // three squeezes while it's in his hand, each with a little wobble after
+      const u = (s.t - s.hold.start) / HOLD_DUR;
+      if (u < 0.22 || u > 0.8) return { press: 0, wob: 0.3 };
+      const v = (u - 0.22) / 0.58, wave = Math.sin(v * Math.PI * 3);
+      return { press: Math.max(0, wave) ** 0.5, wob: wave < 0 ? -wave : 0 };
+    }
+    // squeezed right there on the desk (when Topz's hands are busy)
     const k = s.t - s.squeeze.at;
     if (k < 0 || k > 1.1) return { press: 0, wob: 0 };
     if (k < 0.08) return { press: k / 0.08, wob: 0 };
@@ -517,11 +542,14 @@ export function createScene(canvas, hooks = {}) {
     const r = (k - 0.45) / 0.65;
     return { press: Math.max(0, (1 - r) * Math.cos(r * 9)), wob: (1 - r) };
   }
-  function drawAlien() {
+  // the desk pass draws it unless it's in Topz's hand; drawMark draws it then
+  function drawAlien(inHand = false) {
+    const pos = alienPos();
+    if (pos.held !== inHand) return;
     const { press, wob } = squish();
     const p = Math.max(-0.4, Math.min(1, press));
     const bw = 9 + Math.round(4 * p), bh = 8 - Math.round(3.5 * p);
-    const cx = ALIEN_CX, bx = cx - Math.floor(bw / 2), by = ALIEN_FLOOR - bh;
+    const cx = pos.cx, bx = cx - Math.floor(bw / 2), by = pos.floor - bh;
     const g = '#86e07f', gL = '#c4f5b8', gD = '#4fae55';
     // antennae, wobbling after a squeeze
     const sway = reduced ? 0 : Math.round(Math.sin(s.t * 26) * 1.5 * wob);
@@ -551,7 +579,24 @@ export function createScene(canvas, hooks = {}) {
       R(cx - 1, by + bh - 2, 2, 1, gD);
       R(bx + 1, by + 4, 1, 1, '#ff8fab'); R(bx + bw - 2, by + 4, 1, 1, '#ff8fab'); // blush
     }
+    Object.assign(box('alien'), { x: cx - 6, y: pos.floor - 14, w: 13, h: 15 });
   }
+  // Topz's left arm, reaching from his shoulder to wherever the alien is
+  function drawHoldArm(sx, sy) {
+    const pos = alienPos(), { press } = squish();
+    const hx = pos.cx, hy = pos.floor + 1;
+    const n = Math.max(Math.abs(hx - sx), Math.abs(hy - sy), 1);
+    for (let i = 0; i <= n; i++) {
+      const x = sx + (hx - sx) * i / n, y = sy + (hy - sy) * i / n;
+      R(x - 3, y - 2, 6, 5, C.hoodie); R(x - 3, y + 2, 6, 1, C.hoodieDark);
+    }
+    // hand cupping the alien, fingers closing in as he squeezes
+    const f = Math.round(press * 2);
+    R(hx - 5, hy - 1, 11, 3, C.skin); R(hx - 5, hy + 1, 11, 1, C.skinShade);
+    R(hx - 6 + f, hy - 5, 2, 5, C.skin); R(hx + 5 - f, hy - 5, 2, 5, C.skin);
+    R(hx - 6 + f, hy - 5, 1, 5, C.skinShade);
+  }
+
   const SQUEEZE_TOPZ = [
     'Client says "make it pop". *squeeze*',
     'Merge conflict. *squeeeeze*',
@@ -572,12 +617,32 @@ export function createScene(canvas, hooks = {}) {
     100: '100 squeezes. Achievement unlocked: Stress Master. 👽',
   };
   let squeezeIdx = 0, alienReply;
-  function squeezeAlien() {
+  function squeezeLines(x, y) {
     const q = s.squeeze;
-    q.at = s.t; q.count++;
+    q.count++;
     clearTimeout(alienReply);
-    hooks.say?.(SQUEEZE_MILESTONES[q.count] || SQUEEZE_TOPZ[squeezeIdx++ % SQUEEZE_TOPZ.length], ALIEN_CX, 92);
-    alienReply = setTimeout(() => hooks.say?.(SQUEEZE_ALIEN[Math.floor(Math.random() * SQUEEZE_ALIEN.length)], ALIEN_CX, 92), 1300);
+    hooks.say?.(SQUEEZE_MILESTONES[q.count] || SQUEEZE_TOPZ[squeezeIdx++ % SQUEEZE_TOPZ.length], x(), y);
+    alienReply = setTimeout(() => hooks.say?.(SQUEEZE_ALIEN[Math.floor(Math.random() * SQUEEZE_ALIEN.length)], x(), y), 1500);
+  }
+  // Topz picks the alien up and squeezes it (if his hands are free)
+  function startHold() {
+    if (holding()) return false;
+    if (s.t < s.drinkUntil || s.t < s.stretchUntil) return false;
+    s.hold.start = s.t;
+    s.hold.until = s.t + HOLD_DUR;
+    s.hold.next = s.t + rand(45, 80);
+    squeezeLines(() => alienPos().cx + 8, 76);
+    return true;
+  }
+  function squeezeAlien() {
+    if (holding()) { // already in his hand: one extra squeak
+      hooks.say?.(SQUEEZE_ALIEN[Math.floor(Math.random() * SQUEEZE_ALIEN.length)], alienPos().cx + 8, 76);
+      return;
+    }
+    if (startHold()) return;
+    // hands busy (drinking or stretching): squeeze it right there on the desk
+    s.squeeze.at = s.t;
+    squeezeLines(() => ALIEN_CX, 92);
   }
 
   function drawDesk(dl) {
@@ -670,7 +735,7 @@ export function createScene(canvas, hooks = {}) {
       R(149, 58, 1, 33, C.hoodieDark); R(190, 58, 1, 33, C.hoodieDark);
       R(150, 53, 5, 5, C.skin); R(185, 53, 5, 5, C.skin);
     } else {
-      R(146, 94 - tap, 6, 14, C.hoodie); R(146, 94 - tap, 1, 14, C.hoodieDark); R(147, 107 - tap, 5, 2, C.hoodieDark);
+      if (!holding()) { R(146, 94 - tap, 6, 14, C.hoodie); R(146, 94 - tap, 1, 14, C.hoodieDark); R(147, 107 - tap, 5, 2, C.hoodieDark); }
       if (!drinking) { R(188, 94 + tap, 6, 14, C.hoodie); R(193, 94 + tap, 1, 14, C.hoodieDark); R(188, 107 + tap, 5, 2, C.hoodieDark); }
     }
     // hood bunched at the neck
@@ -694,6 +759,7 @@ export function createScene(canvas, hooks = {}) {
     drawHat();
     ctx.restore();
     ctx.restore();
+    if (holding()) { drawHoldArm(119 + roll + sw, 109); drawAlien(true); }
     Object.assign(box('mark'), { x: 116 + roll, y: 78 });
     Object.assign(box('hat'), { x: 127 + roll, y: 118 });
   }
@@ -722,7 +788,7 @@ export function createScene(canvas, hooks = {}) {
   ];
   let drinkIdx = 0;
   function startDrink() {
-    if (s.t < s.drinkUntil) return;
+    if (s.t < s.drinkUntil || holding()) return;
     s.drinkStart = s.t;
     s.drinkUntil = s.t + 3.2;
     s.nextDrink = s.t + rand(40, 70);
@@ -1272,7 +1338,7 @@ export function createScene(canvas, hooks = {}) {
     s.blinds += (s.blindsTarget - s.blinds) * Math.min(1, dt * 4);
     // the chair rolls to a new spot now and then
     const ch = s.chair;
-    if (!reduced && s.t > ch.next && s.t > s.drinkUntil) { ch.tx = Math.round(rand(-8, 8)); ch.next = s.t + rand(8, 16); }
+    if (!reduced && s.t > ch.next && s.t > s.drinkUntil && !holding()) { ch.tx = Math.round(rand(-8, 8)); ch.next = s.t + rand(8, 16); }
     ch.x += Math.sign(ch.tx - ch.x) * Math.min(Math.abs(ch.tx - ch.x), dt * 8);
     for (let i = 0; i < 3; i++) {
       if (s.doorsTarget[i] && s.t > s.doorsCloseAt[i]) s.doorsTarget[i] = 0;
@@ -1281,8 +1347,9 @@ export function createScene(canvas, hooks = {}) {
     s.bulbGlow = reduced ? (s.bulb ? 1 : 0) : s.bulbGlow + ((s.bulb ? 1 : 0) - s.bulbGlow) * Math.min(1, dt * 8);
 
     if (s.t > s.nextBlink) { s.blinkUntil = s.t + 0.14; s.nextBlink = s.t + rand(2.5, 5.5); }
-    if (s.t > s.nextStretch && s.t > s.drinkUntil) { s.stretchUntil = s.t + 1.8; s.nextStretch = s.t + rand(25, 45); }
+    if (s.t > s.nextStretch && s.t > s.drinkUntil && !holding()) { s.stretchUntil = s.t + 1.8; s.nextStretch = s.t + rand(25, 45); }
     if (s.t > s.nextDrink && s.t > s.stretchUntil) startDrink();
+    if (s.t > s.hold.next && !reduced) { if (!startHold()) s.hold.next = s.t + 5; } // he grabs it on his own sometimes
     if (s.t > s.nextRing) { s.ringUntil = s.t + 3; s.nextRing = s.t + rand(50, 90); }
     if (s.t > s.nextFlicker) { s.neonOffUntil = s.t + rand(0.08, 0.3); s.nextFlicker = s.t + rand(5, 16); }
 
