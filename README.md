@@ -17,6 +17,7 @@
 | Mug | This MEETING should have been an EMAIL |
 | Water bottle | Topz takes a sip (he also does on his own) |
 | Aircon | On/off |
+| Light bulb | Switches the ceiling light on/off — the room warms up and brightens, most noticeably at night |
 | Straw hat | Hangs on the chair; says something |
 | Treasure chest | Opens with a sparkle and pops out a random find, each with its own line (the golden rubber duck is rare) |
 | Cockroach, mouse, frog, spider, butiki | They roam the room. Click them. |

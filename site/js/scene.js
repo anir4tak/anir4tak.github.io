@@ -139,6 +139,7 @@ export function createScene(canvas, hooks = {}) {
     hearts: [],
     weather: 'clear', flashUntil: 0, nextFlash: 8,
     ac: true,
+    bulb: false, bulbGlow: 0,
     chest: { open: 0, target: 0, item: null, itemAt: 0, closeAt: 0, last: -1, sparks: [] },
     roach: { x: 200, y: 170, tx: 200, ty: 170, state: 'wait', until: rand(3, 8), dir: 1, flee: false },
     mouse: { state: 'home', x: 82, dir: 1, until: rand(10, 20), tx: 82 },
@@ -166,6 +167,7 @@ export function createScene(canvas, hooks = {}) {
     { id: 'mug', label: 'Mug · "This MEETING should have been an EMAIL"', x: 112, y: 98, w: 13, h: 13 },
     { id: 'dog', label: 'Mochi', x: 0, y: 0, w: 18, h: 14 },
     { id: 'aircon', label: 'Aircon · on/off', x: 90, y: 3, w: 44, h: 18 },
+    { id: 'bulb', label: 'Light bulb · on/off', x: 45, y: 0, w: 14, h: 24 },
     { id: 'chest', label: 'Treasure chest · open me', x: 268, y: 148, w: 30, h: 24 },
     { id: 'hat', label: 'Straw hat', x: 157, y: 102, w: 26, h: 12 },
     { id: 'roach', label: '?', x: -99, y: 0, w: 14, h: 11 },
@@ -605,11 +607,51 @@ export function createScene(canvas, hooks = {}) {
   }
 
 
+  // ---------- ceiling light bulb ----------
+  const BULB_X = 52, BULB_Y = 15; // centre of the glass
+  function drawBulb() {
+    const g = s.bulbGlow;
+    // cord from the ceiling, a little ceiling rose, and the socket
+    R(BULB_X - 3, 0, 7, 2, '#c9ced8'); R(BULB_X - 3, 2, 7, 1, '#9aa1b0');
+    R(BULB_X, 3, 1, 7, '#2b3245');
+    R(BULB_X - 2, 10, 5, 3, '#6b7183'); R(BULB_X - 2, 10, 5, 1, '#9aa1b0');
+    // glass: dull grey when off, warm white when on
+    const glass = g > 0.5 ? '#fff3c4' : '#c9ced8';
+    const edge = g > 0.5 ? '#f6d365' : '#8d93a3';
+    R(BULB_X - 2, 13, 5, 1, edge);
+    R(BULB_X - 3, 14, 7, 5, edge); R(BULB_X - 2, 14, 5, 5, glass);
+    R(BULB_X - 2, 19, 5, 1, edge); R(BULB_X - 1, 20, 3, 1, edge);
+    R(BULB_X - 1, 15, 1, 2, g > 0.5 ? '#ffffff' : '#e6e9f0'); // shine
+    if (g < 0.5) R(BULB_X, 16, 1, 2, '#9aa1b0'); // filament, visible when off
+  }
+  function drawBulbGlow() {
+    const g = s.bulbGlow;
+    if (g < 0.01) return;
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    // stepped, pixel-style rings of warm light around the bulb
+    // (the canvas is tiny and scaled up, so these circles come out pixelated)
+    for (let i = 7; i >= 1; i--) {
+      ctx.fillStyle = `rgba(120,95,40,${0.06 * g})`;
+      ctx.beginPath(); ctx.arc(BULB_X + 0.5, BULB_Y + 2, i * 11, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+    // a hot halo hugging the glass, drawn on top so it pops
+    ctx.save();
+    ctx.shadowColor = '#ffe9a0'; ctx.shadowBlur = 10 * g;
+    R(BULB_X - 2, 14, 5, 5, `rgba(255,243,196,${g})`);
+    ctx.restore();
+  }
+
   function drawLights(dl) {
     // the room darkens with the outside light; the lamp, neon, screens and PC push back
-    const dark = 0.5 * (1 - dl) + (s.blinds > 0.5 ? 0.08 : 0);
-    const gloom = s.weather === 'rain' || s.weather === 'storm' ? 0.1 : s.weather === 'cloudy' || s.weather === 'fog' ? 0.05 : 0;
+    // the ceiling bulb, when on, lifts most of that darkness
+    const lit = 1 - 0.7 * s.bulbGlow;
+    const dark = (0.5 * (1 - dl) + (s.blinds > 0.5 ? 0.08 : 0)) * lit;
+    const gloom = (s.weather === 'rain' || s.weather === 'storm' ? 0.1 : s.weather === 'cloudy' || s.weather === 'fog' ? 0.05 : 0) * lit;
     if (dark + gloom > 0.01) { ctx.fillStyle = `rgba(6,8,24,${dark + gloom})`; ctx.fillRect(0, 0, W, H); }
+    // whole room picks up a faint warm tint from the bulb
+    if (s.bulbGlow > 0.01) { ctx.fillStyle = `rgba(255,214,140,${0.06 * s.bulbGlow})`; ctx.fillRect(0, 0, W, H); }
     if (s.t < s.flashUntil) { ctx.fillStyle = 'rgba(220,230,255,0.18)'; ctx.fillRect(0, 0, W, H); }
     if (dl < 0.8) {
       const a = 1 - dl;
@@ -909,6 +951,12 @@ export function createScene(canvas, hooks = {}) {
       hooks.say?.(s.ac ? 'Aircon on. The Iloilo heat stands no chance. ❄' : 'Aircon off. Saving on the electric bill.', 112, 22);
       return true;
     }
+    if (id === 'bulb') {
+      s.bulb = !s.bulb;
+      hooks.say?.(s.bulb ? ['Let there be light. 💡', 'Ahh, now I can see the bugs. Both kinds.', 'Lights on. Productivity +10.'][Math.floor(Math.random() * 3)]
+                         : ['Lights off. Monitor glow only.', 'Dark mode: room edition.', 'Saving electricity. And my eyes.'][Math.floor(Math.random() * 3)], 52, 26);
+      return true;
+    }
     if (id === 'hat') {
       hooks.say?.(['My lucky straw hat.', 'Every adventure needs a hat.', 'Sun protection for the walk to 7-Eleven.'][Math.floor(Math.random() * 3)], 170, 96);
       return true;
@@ -1095,6 +1143,7 @@ export function createScene(canvas, hooks = {}) {
     s.t += dt;
     updateCritters(dt);
     s.blinds += (s.blindsTarget - s.blinds) * Math.min(1, dt * 4);
+    s.bulbGlow = reduced ? (s.bulb ? 1 : 0) : s.bulbGlow + ((s.bulb ? 1 : 0) - s.bulbGlow) * Math.min(1, dt * 8);
 
     if (s.t > s.nextBlink) { s.blinkUntil = s.t + 0.14; s.nextBlink = s.t + rand(2.5, 5.5); }
     if (s.t > s.nextStretch && s.t > s.drinkUntil) { s.stretchUntil = s.t + 1.8; s.nextStretch = s.t + rand(25, 45); }
@@ -1128,6 +1177,7 @@ export function createScene(canvas, hooks = {}) {
     drawClock(d);
     drawKatanas();
     drawAircon();
+    drawBulb();
     drawLizard();
     drawFloor();
     drawMouseHole();
@@ -1142,6 +1192,7 @@ export function createScene(canvas, hooks = {}) {
     drawFloorCritters();
     drawSpider();
     drawLights(light);
+    drawBulbGlow();
     drawNeon(d);
     drawHearts(1 / 60);
     drawNotes(1 / 60);
@@ -1161,7 +1212,7 @@ export function createScene(canvas, hooks = {}) {
   // ---------- input ----------
   function hit(x, y) {
     // dog first: it walks in front of everything
-    const order = ['roach', 'mouse', 'frog', 'spider', 'lizard', 'chest', 'dog', 'contact', 'bottle', 'mug', 'hat', 'aircon', 'jukebox', 'katana', 'mark', 'pc', 'monitors', 'window', 'projects', 'about', 'shelf'];
+    const order = ['roach', 'mouse', 'frog', 'spider', 'lizard', 'chest', 'dog', 'contact', 'bottle', 'mug', 'hat', 'bulb', 'aircon', 'jukebox', 'katana', 'mark', 'pc', 'monitors', 'window', 'projects', 'about', 'shelf'];
     for (const id of order) {
       const o = objects.find((ob) => ob.id === id);
       if (x >= o.x && x < o.x + o.w && y >= o.y && y < o.y + o.h) return o;
