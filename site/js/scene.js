@@ -2,6 +2,7 @@
 // No image files: sprites are strings, one character per pixel.
 
 export const W = 320;
+const RGB_DEFAULT = 0;
 export const H = 180;
 const FLOOR_Y = 140;
 
@@ -10,7 +11,7 @@ const C = {
   floorA: '#3d2a2c', floorB: '#45302f', floorLine: '#2b1d20', floorShine: '#54393a',
   wood: '#8a5a3c', woodLight: '#a8714c', woodDark: '#5e3b28', woodDeep: '#43291c',
   teal: '#2bbecb', tealLight: '#7ff3ff', tealDark: '#17707a',
-  hoodie: '#2e3448', hoodieLight: '#3c4460', hoodieDark: '#22273a',
+  hoodie: '#2a8f99', hoodieLight: '#3fb0ba', hoodieDark: '#1d6870',
   skin: '#c98a5e', skinShade: '#a96e48', hair: '#15121c', hairLight: '#2c2742',
   chair: '#12141f', chairLight: '#1f2333',
   white: '#e9edf5', grey: '#9aa3b5', greyDark: '#5d6578',
@@ -36,29 +37,6 @@ function sprite(rows, pal, x, y, flip = false) {
 }
 
 // ---------- sprites ----------
-const HEAD = [
-  '....PPPPPPPP....',
-  '..PPhhhhhhhhPP..',
-  '.PhhhhhhhhhhhhP.',
-  '.PhhhHhhhHhhhhP.',
-  'pphhhhhhhhhhhhpp',
-  'pphshhhhhhhhhspp',
-  'ppssshhsshhssspp',
-  'ppsssssssssssspp',
-  'ppsseessssseespp',
-  'ppsssssssssssspp',
-  '.PsssssSSsssssP.',
-  '..ssssmmmmssss..',
-  '..SssssssssssS..',
-  '...SSssssssSS...',
-  '......ssss......',
-  '......SSSS......',
-];
-const headPal = (blink) => ({
-  P: C.tealDark, p: C.teal, h: C.hair, H: C.hairLight, s: C.skin, S: C.skinShade,
-  e: blink ? C.skinShade : '#1a1420', m: '#7a3e2e',
-});
-
 const DOG_WALK = [
   [
     '..........k...k.',
@@ -149,6 +127,7 @@ export function createScene(canvas, hooks = {}) {
     ringUntil: 0, nextRing: rand(25, 45),
     neonOffUntil: 0, nextFlicker: rand(6, 14),
     hearts: [],
+    rgbMode: RGB_DEFAULT,
     dog: { x: 70, dir: 1, state: 'sleep', until: rand(8, 15), target: 0, wag: 0 },
   };
 
@@ -158,7 +137,9 @@ export function createScene(canvas, hooks = {}) {
     { id: 'about', label: 'About me', x: 194, y: 38, w: 52, h: 38 },
     { id: 'skills', label: 'Skills', x: 260, y: 50, w: 50, h: 98 },
     { id: 'contact', label: 'Contact · the phone', x: 24, y: 100, w: 30, h: 18 },
-    { id: 'mark', label: 'Mark', x: 148, y: 54, w: 44, h: 56 },
+    { id: 'mark', label: 'Mark', x: 146, y: 62, w: 48, h: 86 },
+    { id: 'monitors', label: 'Projects · on screen', x: 126, y: 72, w: 88, h: 38 },
+    { id: 'pc', label: 'PC · change the RGB', x: 216, y: 70, w: 24, h: 42 },
     { id: 'dog', label: 'Mochi', x: 0, y: 0, w: 18, h: 14 },
   ];
   const dogBox = objects.find((o) => o.id === 'dog');
@@ -393,82 +374,158 @@ export function createScene(canvas, hooks = {}) {
     R(62, 157, 38, 5, C.tealDark); R(62, 157, 38, 1, C.teal); R(64, 162, 34, 1, '#0e2e33');
   }
 
-  function drawChair() {
-    R(152, 56, 36, 54, C.chair); R(154, 54, 32, 4, C.chair);
-    R(156, 52, 28, 3, C.chairLight);
-    R(158, 60, 2, 48, C.tealDark); R(180, 60, 2, 48, C.tealDark);
+  function drawMonitors(dl) {
+    const scroll = Math.floor(s.t * 3);
+    // left: code editor
+    let x = 128, y = 74, w = 38, h = 28;
+    R(x, y, w, h, '#0b0d18'); R(x + 2, y + 2, w - 4, h - 5, '#13172a');
+    R(x + 2, y + 2, 5, h - 5, '#0f1222');
+    const cols = ['#7ff3ff', '#f6d365', '#ff8fab', '#9be7a0', '#c3a6ff', '#9aa3b5'];
+    for (let i = 0; i < 7; i++) {
+      const n = i + scroll;
+      const ind = (n * 7) % 4 * 2;
+      const len = 6 + ((n * 13) % 16);
+      R(x + 3, y + 4 + i * 3, 2, 1, '#3a4160');
+      R(x + 9 + ind, y + 4 + i * 3, Math.min(len, w - 13 - ind), 1, cols[(n * 5) % cols.length]);
+    }
+    if (Math.floor(s.t * 2) % 2) R(x + 9, y + 22, 1, 2, '#ffffff');
+    R(x + 17, y + h, 4, 6, '#0b0d18'); R(x + 12, y + h + 5, 14, 2, '#1a1d2b');
+    // right: website mockup
+    x = 174; w = 38;
+    R(x, y, w, h, '#0b0d18'); R(x + 2, y + 2, w - 4, h - 5, '#f4f6fb');
+    R(x + 2, y + 2, w - 4, 3, C.teal);
+    R(x + 4, y + 7, 14, 2, '#2b3245'); R(x + 4, y + 10, 18, 1, '#9aa3b5'); R(x + 4, y + 12, 12, 1, '#9aa3b5');
+    R(x + 4, y + 15, 9, 3, C.teal);
+    R(x + 23, y + 7, 11, 11, '#8a7bd8'); R(x + 25, y + 13, 7, 5, '#c3a6ff');
+    // a cursor wandering about the page
+    const cx = x + 8 + Math.round((Math.sin(s.t * 0.7) + 1) * 11), cy = y + 8 + Math.round((Math.sin(s.t * 1.1) + 1) * 5);
+    R(cx, cy, 1, 3, '#15121c'); R(cx + 1, cy + 1, 1, 1, '#15121c');
+    R(x + 17, y + h, 4, 6, '#0b0d18'); R(x + 12, y + h + 5, 14, 2, '#1a1d2b');
   }
 
-  function drawMark() {
-    const stretching = s.t < s.stretchUntil;
-    const typing = !stretching;
-    const bob = typing && Math.floor(s.t * 2) % 2 ? 1 : 0;
-    const tap = Math.floor(s.t * 8) % 2;
-
-    // torso
-    R(155, 82, 30, 30, C.hoodie); R(157, 80, 26, 3, C.hoodie);
-    R(163, 80, 14, 4, C.hoodieDark);
-    R(166, 85, 1, 8, C.teal); R(173, 85, 1, 8, C.teal);
-    R(160, 98, 20, 8, C.hoodieLight); // pocket
-    R(155, 82, 1, 30, C.hoodieDark); R(184, 82, 1, 30, C.hoodieDark);
-
-    if (stretching) {
-      // arms up behind the head
-      R(150, 60, 6, 26, C.hoodie); R(184, 60, 6, 26, C.hoodie);
-      R(156, 56, 6, 6, C.hoodie); R(178, 56, 6, 6, C.hoodie);
-      R(162, 54, 5, 4, C.skin); R(173, 54, 5, 4, C.skin);
-    } else {
-      R(148, 86, 8, 22, C.hoodie); R(184, 86, 8, 22, C.hoodie);
-      R(148, 86, 1, 22, C.hoodieDark); R(191, 86, 1, 22, C.hoodieDark);
-      R(150, 106 + tap, 7, 4, C.skin); R(183, 107 - tap, 7, 4, C.skin);
+  const RGB = ['#2bbecb', '#ff6f91', '#9be7a0', '#c3a6ff', '#f6d365'];
+  function drawPC() {
+    const x = 218, y = 72;
+    R(x, y, 20, 38, '#0b0d18'); R(x + 1, y + 1, 18, 36, '#14172a');
+    R(x + 3, y + 3, 12, 32, '#0d1020');
+    const col = s.rgbMode === RGB.length ? RGB[Math.floor(s.t * 2) % RGB.length] : RGB[s.rgbMode];
+    const spin = Math.floor(s.t * 10) % 4;
+    for (const fy of [y + 7, y + 20]) {
+      R(x + 5, fy, 8, 1, col); R(x + 5, fy + 7, 8, 1, col); R(x + 4, fy + 1, 1, 6, col); R(x + 13, fy + 1, 1, 6, col);
+      const blade = [[0, 0], [1, 0], [1, 1], [0, 1]][spin];
+      R(x + 7 + blade[0] * 2, fy + 2 + blade[1] * 2, 2, 2, '#3a4160');
+      R(x + 8, fy + 3, 2, 2, col);
     }
-    // head
-    sprite(HEAD, headPal(s.t < s.blinkUntil), 162, 64 + bob);
-    if (stretching) R(168, 76 + bob, 4, 1, '#7a3e2e'); // yawn
+    R(x + 16, y + 4, 1, 30, col);
+    R(x + 16, y + 34, 2, 1, '#7ff3ff');
+    R(x + 2, y + 38, 3, 2, '#0b0d18'); R(x + 15, y + 38, 3, 2, '#0b0d18');
+    return col;
   }
 
   function drawDesk(dl) {
-    // laptop (lid back faces us)
-    R(160, 96, 20, 14, '#aeb6c7'); R(160, 96, 20, 1, '#cfd6e2');
-    R(168, 101, 4, 4, dl < 0.5 ? C.tealLight : C.teal);
-    R(156, 110, 28, 2, '#7f889b');
-    // desk
     R(96, 110, 148, 4, C.woodLight); R(96, 110, 148, 1, '#c48a60');
     R(96, 114, 148, 6, C.wood); R(96, 119, 148, 1, C.woodDark);
     R(100, 120, 6, 34, C.woodDark); R(234, 120, 6, 34, C.woodDark);
     R(106, 120, 2, 30, C.woodDeep); R(232, 120, 2, 30, C.woodDeep);
-    // plant
-    R(108, 102, 10, 8, C.pot); R(107, 101, 12, 2, '#d27b52');
-    R(112, 92, 2, 10, C.leafDark); R(108, 94, 4, 3, C.leaf); R(114, 90, 4, 3, C.leaf); R(106, 98, 4, 2, C.leaf); R(115, 96, 5, 2, C.leaf);
+    drawMonitors(dl);
+    s.pcColor = drawPC();
+    // lamp, far left, leaning over the desk
+    R(99, 107, 12, 3, '#3a3f58'); R(104, 90, 2, 17, '#3a3f58');
+    R(104, 88, 9, 2, '#3a3f58'); R(110, 84, 10, 5, C.teal); R(111, 89, 8, 1, '#fff6c8');
     // mug with steam
-    R(132, 102, 8, 8, C.white); R(132, 104, 8, 2, C.teal); R(140, 104, 2, 4, C.white);
+    R(114, 102, 8, 8, C.white); R(114, 104, 8, 2, C.teal); R(122, 104, 2, 4, C.white);
     if (!reduced) for (let i = 0; i < 3; i++) {
       const k = (s.t * 6 + i * 3) % 9;
-      R(134 + (Math.floor(k) % 2) + i, 100 - k, 1, 1, '#ffffff55');
+      R(116 + (Math.floor(k) % 2) + i, 100 - k, 1, 1, '#ffffff55');
     }
-    // books
-    R(196, 104, 16, 3, '#e05a5a'); R(197, 101, 14, 3, '#5b8def'); R(196, 107, 16, 3, '#f6d365');
-    // lamp
-    R(214, 107, 12, 3, '#3a3f58'); R(219, 92, 2, 15, '#3a3f58');
-    R(212, 88, 9, 2, '#3a3f58'); R(206, 84, 10, 5, C.teal); R(207, 89, 8, 1, '#fff6c8');
+    // floor plant between desk and shelf
+    R(243, 134, 14, 12, C.pot); R(242, 133, 16, 2, '#d27b52'); R(243, 145, 14, 1, '#8a4a2e');
+    R(249, 108, 2, 25, C.leafDark);
+    for (const [lx, ly, lw] of [[243, 112, 6], [251, 106, 6], [242, 120, 7], [251, 116, 7], [244, 127, 5], [252, 124, 6]]) {
+      R(lx, ly, lw, 3, C.leaf); R(lx + 1, ly + 1, lw - 2, 1, C.leafDark);
+    }
+  }
+
+  // Mark, seen from behind, in his chair
+  const HEAD_BACK = [
+    '....hhhhhhhh....',
+    '..hhhPPPPPPhhh..',
+    '.hhPPhhhhhhPPhh.',
+    '.hPhhhHhhHhhhPh.',
+    'hhPhhhhhhhhhhPhh',
+    'ppphhhhhhhhhhppp',
+    'ppphhhHhhhhhhppp',
+    'ppphhhhhhhhhhppp',
+    'ppphhhhhhhhhhppp',
+    '.pphhhhhhhhhhpp.',
+    '..shhhhhhhhhhs..',
+    '...hhhhhhhhhh...',
+    '....hhhhhhhh....',
+    '.....ssssss.....',
+    '.....SSSSSS.....',
+    '.....SSSSSS.....',
+  ];
+  const headBackPal = { P: C.teal, p: C.tealDark, h: C.hair, H: C.hairLight, s: C.skin, S: C.skinShade };
+
+  function drawMark() {
+    const stretching = s.t < s.stretchUntil;
+    const tap = !stretching && Math.floor(s.t * 6) % 2;
+    const look = s.t % 14 > 9 ? 1 : 0; // glances at the right monitor now and then
+
+    // back and shoulders: sloped, with arms reaching forward to the keyboard
+    const by = tap ? 1 : 0;
+    R(160, 85 + by, 20, 2, C.hoodie); R(155, 87 + by, 30, 2, C.hoodie); R(151, 89 + by, 38, 22, C.hoodie);
+    R(160, 85 + by, 20, 1, C.hoodieLight); R(155, 87 + by, 5, 1, C.hoodieLight); R(180, 87 + by, 5, 1, C.hoodieLight);
+    R(151, 89 + by, 2, 22, C.hoodieDark); R(187, 89 + by, 2, 22, C.hoodieDark);
+    if (stretching) {
+      R(149, 58, 6, 33, C.hoodie); R(185, 58, 6, 33, C.hoodie);
+      R(149, 58, 1, 33, C.hoodieDark); R(190, 58, 1, 33, C.hoodieDark);
+      R(150, 53, 5, 5, C.skin); R(185, 53, 5, 5, C.skin);
+    } else {
+      R(146, 94 - tap, 6, 14, C.hoodie); R(188, 94 + tap, 6, 14, C.hoodie);
+      R(146, 94 - tap, 1, 14, C.hoodieDark); R(193, 94 + tap, 1, 14, C.hoodieDark);
+      R(147, 107 - tap, 5, 2, C.hoodieDark); R(188, 107 + tap, 5, 2, C.hoodieDark);
+    }
+    // hood bunched at the neck
+    R(161, 80, 18, 7, C.hoodieDark); R(163, 79, 14, 2, C.hoodie); R(164, 86, 12, 2, C.hoodieDark);
+    sprite(HEAD_BACK, headBackPal, 162 + look, 64);
+    R(166 + look, 64, 8, 1, '#3a3456');
+
+    // chair back (low enough to see Mark's shoulders over it)
+    R(156, 96, 28, 32, C.chair); R(158, 94, 24, 3, C.chair);
+    R(159, 98, 2, 26, '#2b2f40'); R(179, 98, 2, 26, '#2b2f40');
+    R(166, 104, 8, 6, C.chairLight);
+    R(156, 126, 28, 4, '#0b0c14');
+    // seat edge, gas lift, star base
+    R(150, 128, 40, 4, C.chair); R(168, 132, 4, 12, '#2b2f40');
+    R(154, 144, 32, 2, '#2b2f40'); R(152, 146, 3, 3, '#0b0c14'); R(185, 146, 3, 3, '#0b0c14'); R(168, 146, 4, 3, '#0b0c14');
   }
 
   function drawLights(dl) {
-    // the room darkens with the outside light; the lamp, neon and laptop push back
+    // the room darkens with the outside light; the lamp, neon, screens and PC push back
     const dark = 0.5 * (1 - dl) + (s.blinds > 0.5 ? 0.08 : 0);
     if (dark > 0.01) { ctx.fillStyle = `rgba(6,8,24,${dark})`; ctx.fillRect(0, 0, W, H); }
     if (dl < 0.8) {
       const a = 1 - dl;
       ctx.save();
       ctx.globalCompositeOperation = 'screen';
+      // desk lamp pool
       ctx.fillStyle = `rgba(110,80,25,${0.38 * a})`;
-      ctx.beginPath(); ctx.moveTo(207, 90); ctx.lineTo(215, 90); ctx.lineTo(234, 110); ctx.lineTo(188, 110); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = `rgba(150,110,40,${0.5 * a})`;
-      ctx.fillRect(186, 110, 50, 2);
-      // laptop glow on Mark's face
-      ctx.fillStyle = `rgba(20,80,90,${0.35 * a})`;
-      ctx.fillRect(164, 72, 12, 9);
-      ctx.fillRect(166, 81, 8, 2);
+      ctx.beginPath(); ctx.moveTo(110, 90); ctx.lineTo(119, 90); ctx.lineTo(132, 110); ctx.lineTo(100, 110); ctx.closePath(); ctx.fill();
+      // soft, stepped glow around each screen and the PC
+      const glow = (x, y, w, h, rgb, k) => {
+        for (let i = 3; i >= 1; i--) {
+          ctx.fillStyle = `rgba(${rgb},${k * a / i})`;
+          ctx.fillRect(x - i * 2, y - i * 2, w + i * 4, h + i * 4);
+        }
+      };
+      glow(128, 74, 38, 25, '30,90,110', 0.12);
+      glow(174, 74, 38, 25, '60,90,110', 0.12);
+      const pc = s.pcColor || C.teal;
+      const n = parseInt(pc.slice(1), 16);
+      glow(218, 72, 20, 38, `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`, 0.07);
+      ctx.fillStyle = `rgba(60,150,160,${0.4 * a})`;
+      ctx.fillRect(166, 64, 8, 1);
       ctx.restore();
     }
   }
@@ -548,9 +605,8 @@ export function createScene(canvas, hooks = {}) {
     drawFloor();
     drawShelf();
     drawCabinet(d);
-    drawChair();
-    drawMark();
     drawDesk(light);
+    drawMark();
     drawDog();
     drawBedFront();
     drawLights(light);
@@ -561,7 +617,7 @@ export function createScene(canvas, hooks = {}) {
 
   let last = performance.now();
   function loop(now) {
-    const dt = Math.min(0.1, (now - last) / 1000);
+    const dt = Math.max(0, Math.min(0.1, (now - last) / 1000));
     last = now;
     update(dt);
     draw();
@@ -572,7 +628,7 @@ export function createScene(canvas, hooks = {}) {
   // ---------- input ----------
   function hit(x, y) {
     // dog first: it walks in front of everything
-    const order = ['dog', 'contact', 'mark', 'window', 'projects', 'about', 'skills'];
+    const order = ['dog', 'contact', 'mark', 'pc', 'monitors', 'window', 'projects', 'about', 'skills'];
     for (const id of order) {
       const o = objects.find((ob) => ob.id === id);
       if (x >= o.x && x < o.x + o.w && y >= o.y && y < o.y + o.h) return o;
@@ -603,8 +659,9 @@ export function createScene(canvas, hooks = {}) {
       hooks.say?.(MARK_LINES[lineIdx++ % MARK_LINES.length], 170, 58);
       return;
     }
+    if (o.id === 'pc') { s.rgbMode = (s.rgbMode + 1) % (RGB.length + 1); return; }
     if (o.id === 'contact') s.ringUntil = 0;
-    hooks.open?.(o.id);
+    hooks.open?.(o.id === 'monitors' ? 'projects' : o.id);
   }
 
   return {

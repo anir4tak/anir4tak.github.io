@@ -4,7 +4,8 @@
 
 | Click | What happens |
 |---|---|
-| Framed pictures | Projects — WordPress sites built with Elementor and ACF |
+| Framed pictures or the two monitors | Projects — WordPress sites built with Elementor and ACF |
+| PC tower | Cycles the RGB lighting |
 | Cork board | About me |
 | Bookshelf | Skills |
 | Teal phone | Contact (it rings now and then) |
