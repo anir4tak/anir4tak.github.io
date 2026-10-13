@@ -1199,7 +1199,7 @@ export function createScene(canvas, hooks = {}) {
     return MARK_LINES[lineIdx++ % MARK_LINES.length];
   }
   let lineIdx = 0;
-  const KATANA_LINES = ['I drew these myself. Pixel by pixel.', 'Three swords. Zero sword skills.', 'Decor only — Mochi is the real guard.', 'Display swords. Please do not debug with them.'];
+  const KATANA_LINES = ['Three swords. Zero sword skills.', 'Decor only — Mochi is the real guard.', 'Display swords. Please do not debug with them.'];
   let katanaIdx = 0;
 
   function click(o) {
