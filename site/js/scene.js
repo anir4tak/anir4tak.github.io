@@ -139,6 +139,7 @@ export function createScene(canvas, hooks = {}) {
     hearts: [],
     weather: 'clear', flashUntil: 0, nextFlash: 8,
     ac: true,
+    chest: { open: 0, target: 0, item: null, itemAt: 0, closeAt: 0, last: -1, sparks: [] },
     roach: { x: 200, y: 170, tx: 200, ty: 170, state: 'wait', until: rand(3, 8), dir: 1, flee: false },
     mouse: { state: 'home', x: 82, dir: 1, until: rand(10, 20), tx: 82 },
     frog: { x: 196, y: 168, from: null, to: null, hopAt: 0, next: rand(3, 7) },
@@ -165,6 +166,7 @@ export function createScene(canvas, hooks = {}) {
     { id: 'mug', label: 'Mug · "This MEETING should have been an EMAIL"', x: 112, y: 98, w: 13, h: 13 },
     { id: 'dog', label: 'Mochi', x: 0, y: 0, w: 18, h: 14 },
     { id: 'aircon', label: 'Aircon · on/off', x: 90, y: 3, w: 44, h: 18 },
+    { id: 'chest', label: 'Treasure chest · open me', x: 268, y: 148, w: 30, h: 24 },
     { id: 'hat', label: 'Straw hat', x: 157, y: 102, w: 26, h: 12 },
     { id: 'roach', label: '?', x: -99, y: 0, w: 14, h: 11 },
     { id: 'mouse', label: '?', x: -99, y: 0, w: 12, h: 9 },
@@ -913,6 +915,111 @@ export function createScene(canvas, hooks = {}) {
     }
     return false;
   }
+  // ---------- treasure chest ----------
+  // each find: how to draw it (10×10 at x,y) and what Topz says about it
+  const LOOT = [
+    { name: 'gold', say: "A pile of gold! …it's chocolate. Still counts.", draw: (x, y) => {
+      R(x + 1, y + 6, 8, 3, '#c9972c'); R(x + 2, y + 4, 6, 2, '#f2c14e'); R(x + 3, y + 2, 4, 2, '#f6d365');
+      R(x + 4, y + 3, 1, 1, '#fff3b0'); R(x + 2, y + 7, 1, 1, '#fff3b0'); R(x + 6, y + 6, 1, 1, '#fff3b0'); } },
+    { name: 'ruby', say: "A ruby! Perfect for the next client who says 'make it pop'.", draw: (x, y) => {
+      R(x + 3, y + 1, 4, 1, '#ff8fab'); R(x + 2, y + 2, 6, 2, '#e05a5a'); R(x + 3, y + 4, 4, 2, '#b8334a'); R(x + 4, y + 6, 2, 2, '#8a2238');
+      R(x + 3, y + 2, 1, 1, '#ffd0dc'); } },
+    { name: 'map', say: 'A treasure map. The X marks… this exact chest. Hmm.', draw: (x, y) => {
+      R(x, y + 1, 10, 8, '#e8d6a8'); R(x, y + 1, 10, 1, '#c9b07a'); R(x, y + 8, 10, 1, '#c9b07a');
+      R(x + 2, y + 3, 1, 1, '#8a6a3a'); R(x + 3, y + 4, 2, 1, '#8a6a3a'); R(x + 5, y + 5, 1, 1, '#8a6a3a');
+      R(x + 6, y + 5, 1, 1, '#e05a5a'); R(x + 8, y + 5, 1, 1, '#e05a5a'); R(x + 7, y + 6, 1, 1, '#e05a5a'); R(x + 6, y + 7, 1, 1, '#e05a5a'); R(x + 8, y + 7, 1, 1, '#e05a5a'); } },
+    { name: 'compass', say: 'A brass compass. It always points to the coffee.', draw: (x, y) => {
+      R(x + 2, y + 1, 6, 8, '#c9972c'); R(x + 1, y + 2, 8, 6, '#c9972c'); R(x + 2, y + 2, 6, 6, '#f4f6fb');
+      R(x + 5, y + 3, 1, 2, '#e05a5a'); R(x + 4, y + 5, 1, 2, '#2b3245'); R(x + 4, y, 2, 1, '#f2c14e'); } },
+    { name: 'bottle', say: "A message in a bottle: 'Hire Topz.' Wise words.", draw: (x, y) => {
+      R(x + 4, y, 2, 2, '#8a5a3c'); R(x + 4, y + 2, 2, 2, '#9fd8c8'); R(x + 2, y + 4, 6, 6, '#9fd8c8');
+      R(x + 3, y + 5, 4, 3, '#efe3c2'); R(x + 3, y + 4, 1, 5, '#d8f3ea'); } },
+    { name: 'spyglass', say: 'A spyglass. Now I can spot bugs from three files away.', draw: (x, y) => {
+      R(x, y + 6, 4, 3, '#c9972c'); R(x + 3, y + 4, 4, 3, '#8a5a3c'); R(x + 6, y + 2, 4, 3, '#c9972c');
+      R(x + 9, y + 2, 1, 3, '#9fd8f0'); R(x + 1, y + 6, 2, 1, '#f6d365'); } },
+    { name: 'duck', rare: true, say: 'THE LEGENDARY GOLDEN RUBBER DUCK. Debugging +100!', draw: (x, y) => {
+      R(x + 5, y + 1, 3, 3, '#f6d365'); R(x + 8, y + 2, 2, 1, '#e48a5b'); R(x + 6, y + 2, 1, 1, '#2b3245');
+      R(x + 1, y + 4, 8, 4, '#f2c14e'); R(x + 2, y + 8, 6, 1, '#c9972c'); R(x + 2, y + 5, 3, 1, '#fff3b0'); } },
+    { name: 'scroll', say: 'The legendary scroll of bug-free code! …it is blank.', draw: (x, y) => {
+      R(x + 1, y + 1, 8, 2, '#c9b07a'); R(x + 2, y + 3, 6, 5, '#efe3c2'); R(x + 1, y + 8, 8, 2, '#c9b07a');
+      R(x + 3, y + 5, 4, 1, '#d8c99a'); } },
+    { name: 'key', say: 'A mystery key. It opens nothing. Yet.', draw: (x, y) => {
+      R(x, y + 2, 4, 4, '#f2c14e'); R(x + 1, y + 3, 2, 2, '#0d0f1c00'); R(x + 1, y + 3, 2, 2, '#c9972c');
+      R(x + 4, y + 3, 6, 2, '#f2c14e'); R(x + 7, y + 5, 1, 2, '#f2c14e'); R(x + 9, y + 5, 1, 2, '#f2c14e'); } },
+    { name: 'flag', say: 'A pirate flag, front-end edition. Crossed pencils, obviously.', draw: (x, y) => {
+      R(x, y, 1, 10, '#8a5a3c'); R(x + 1, y, 9, 7, '#15121c');
+      R(x + 4, y + 1, 3, 3, '#f4f6fb'); R(x + 4, y + 2, 1, 1, '#15121c'); R(x + 6, y + 2, 1, 1, '#15121c');
+      R(x + 2, y + 5, 1, 1, '#f6d365'); R(x + 3, y + 4, 1, 1, '#f6d365'); R(x + 8, y + 5, 1, 1, '#f6d365'); R(x + 7, y + 4, 1, 1, '#f6d365');
+      R(x + 5, y + 5, 1, 1, '#f4f6fb'); } },
+    { name: 'katana', say: 'A spare katana! The rack is full, so it lives under the bed now.', draw: (x, y) => {
+      R(x, y + 8, 3, 2, '#2bbecb'); R(x + 3, y + 6, 2, 3, '#c9a227'); R(x + 4, y + 5, 2, 2, '#c9a227');
+      R(x + 5, y + 3, 2, 2, '#1d2340'); R(x + 7, y + 1, 2, 2, '#1d2340'); R(x + 9, y, 1, 1, '#1d2340'); } },
+    { name: 'bone', say: "Mochi's toy bone! She's been looking everywhere.", draw: (x, y) => {
+      R(x + 2, y + 4, 6, 2, '#f4f6fb'); R(x, y + 3, 2, 2, '#f4f6fb'); R(x, y + 5, 2, 2, '#f4f6fb');
+      R(x + 8, y + 3, 2, 2, '#f4f6fb'); R(x + 8, y + 5, 2, 2, '#f4f6fb'); R(x + 2, y + 6, 6, 1, '#c9ced8'); } },
+    { name: 'shell', say: 'A seashell. Hold it to your ear: you can hear the deadline approaching.', draw: (x, y) => {
+      R(x + 2, y + 2, 6, 6, '#ffb8a8'); R(x + 1, y + 4, 8, 4, '#ffb8a8'); R(x + 4, y + 8, 2, 1, '#e48a8a');
+      R(x + 3, y + 3, 1, 5, '#e48a8a'); R(x + 5, y + 2, 1, 6, '#e48a8a'); R(x + 7, y + 3, 1, 5, '#e48a8a'); } },
+  ];
+
+  function openChest() {
+    const c = s.chest;
+    if (c.target === 1 && s.t < c.closeAt) return; // still showing the last find
+    // the golden duck is rare; never the same find twice in a row
+    let i;
+    do {
+      i = Math.floor(Math.random() * LOOT.length);
+      if (LOOT[i].rare && Math.random() > 0.25) i = c.last;
+    } while (i === c.last);
+    c.last = i;
+    c.item = LOOT[i];
+    c.target = 1;
+    c.itemAt = s.t + 0.35;
+    c.closeAt = s.t + 5;
+    for (let k = 0; k < 14; k++) c.sparks.push({ x: 283 + rand(-8, 8), y: 152, vx: rand(-14, 14), vy: rand(-30, -12), life: rand(0.6, 1.2) });
+    setTimeout(() => hooks.say?.(c.item.say, 283, 128), 380);
+    if (c.item.name === 'bone') { const g = s.dog; g.state = 'walk'; g.target = 236; }
+  }
+
+  function drawChest(dt) {
+    const c = s.chest;
+    if (c.target === 1 && s.t > c.closeAt) c.target = 0;
+    c.open += (c.target - c.open) * Math.min(1, dt * 10);
+    const x = 270, y = 154;
+    const open = c.open > 0.5;
+    // glow from inside
+    if (open) { ctx.fillStyle = 'rgba(255,214,107,0.25)'; ctx.fillRect(x - 2, y - 14, 30, 16); }
+    // lid: closed sits on top, open flips up behind
+    if (open) {
+      R(x + 1, y - 9, 24, 8, '#6b4430'); R(x + 1, y - 9, 24, 1, '#8a5a3c');
+      R(x + 3, y - 7, 20, 5, '#4a2f20'); R(x + 1, y - 2, 24, 2, '#c9a227');
+    }
+    // body
+    R(x, y, 26, 14, '#8a5a3c'); R(x, y, 26, 1, '#a8714c');
+    R(x, y + 4, 26, 1, '#6b4430'); R(x, y + 9, 26, 1, '#6b4430');
+    R(x + 3, y, 2, 14, '#c9a227'); R(x + 21, y, 2, 14, '#c9a227');
+    if (open) { R(x + 2, y, 22, 3, '#f2c14e'); R(x + 5, y, 3, 1, '#fff3b0'); R(x + 15, y + 1, 2, 1, '#fff3b0'); }
+    else {
+      R(x - 1, y - 5, 28, 6, '#8a5a3c'); R(x, y - 6, 26, 1, '#a8714c'); R(x + 1, y - 7, 24, 1, '#8a5a3c');
+      R(x + 3, y - 7, 2, 7, '#c9a227'); R(x + 21, y - 7, 2, 7, '#c9a227');
+      R(x + 11, y - 2, 4, 5, '#c9a227'); R(x + 12, y, 2, 2, '#4a2f20');
+    }
+    R(x + 1, y + 14, 24, 1, '#2b1d20');
+    // the find floats up and bobs
+    if (c.item && open && s.t > c.itemAt) {
+      const rise = Math.min(1, (s.t - c.itemAt) / 0.4);
+      const iy = Math.round(y - 4 - rise * 14 + Math.sin(s.t * 3) * 1);
+      if (c.item.rare) { ctx.fillStyle = `rgba(255,236,150,${0.35 + 0.15 * Math.sin(s.t * 8)})`; ctx.fillRect(x + 6, iy - 3, 14, 16); }
+      c.item.draw(x + 8, iy);
+    }
+    // sparkles
+    c.sparks = c.sparks.filter((p) => (p.life -= dt) > 0);
+    for (const p of c.sparks) {
+      p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 30 * dt;
+      R(p.x, p.y, 1, 1, p.life > 0.4 ? '#fff3b0' : '#f2c14e');
+    }
+    box('chest').y = open ? 140 : 146;
+  }
   function drawDog() {
     const g = s.dog;
     const y = 148;
@@ -999,6 +1106,7 @@ export function createScene(canvas, hooks = {}) {
     drawMark();
     drawDog();
     drawBedFront();
+    drawChest(1 / 60);
     drawFloorCritters();
     drawSpider();
     drawLights(light);
@@ -1021,7 +1129,7 @@ export function createScene(canvas, hooks = {}) {
   // ---------- input ----------
   function hit(x, y) {
     // dog first: it walks in front of everything
-    const order = ['roach', 'mouse', 'frog', 'spider', 'lizard', 'dog', 'contact', 'bottle', 'mug', 'hat', 'aircon', 'jukebox', 'katana', 'mark', 'pc', 'monitors', 'window', 'projects', 'about', 'shelf'];
+    const order = ['roach', 'mouse', 'frog', 'spider', 'lizard', 'chest', 'dog', 'contact', 'bottle', 'mug', 'hat', 'aircon', 'jukebox', 'katana', 'mark', 'pc', 'monitors', 'window', 'projects', 'about', 'shelf'];
     for (const id of order) {
       const o = objects.find((ob) => ob.id === id);
       if (x >= o.x && x < o.x + o.w && y >= o.y && y < o.y + o.h) return o;
@@ -1061,6 +1169,7 @@ export function createScene(canvas, hooks = {}) {
   function click(o) {
     if (!o) return;
     if (critterClick(o.id)) return;
+    if (o.id === 'chest') { openChest(); return; }
     if (o.id === 'window') { s.blindsTarget = s.blindsTarget ? 0 : 1; return; }
     if (o.id === 'dog') {
       const g = s.dog;

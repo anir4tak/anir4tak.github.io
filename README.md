@@ -18,6 +18,7 @@
 | Water bottle | Topz takes a sip (he also does on his own) |
 | Aircon | On/off |
 | Straw hat | Hangs on the chair; says something |
+| Treasure chest | Opens with a sparkle and pops out a random find, each with its own line (the golden rubber duck is rare) |
 | Cockroach, mouse, frog, spider, butiki | They roam the room. Click them. |
 
 The buttons under the room (or keys **1–4**) open the same panels, so everything works without hunting.
