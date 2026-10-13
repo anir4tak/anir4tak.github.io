@@ -9,7 +9,6 @@ on:
 
 permissions:
   contents: write
-  pages: write
 
 concurrency:
   group: pages
@@ -29,8 +28,3 @@ jobs:
           force_orphan: true
           user_name: github-actions[bot]
           user_email: 41898283+github-actions[bot]@users.noreply.github.com
-      # pushes made with GITHUB_TOKEN don't start a Pages build on their own, so ask for one
-      - name: Rebuild GitHub Pages
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh api -X POST "repos/${{ github.repository }}/pages/builds"
