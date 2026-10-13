@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mark · Front-End & WordPress Developer</title>
+  <meta name="description" content="Mark Christofher Rodriguez (Topz) — front-end and WordPress developer in Iloilo City, Philippines. Step into the room and click around.">
+  <meta property="og:title" content="Mark's room">
+  <meta property="og:description" content="A pixel-art portfolio. Click around the room.">
+  <meta name="theme-color" content="#0d0f1c">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600&family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1 class="sr-only">Mark Christofher Rodriguez — Front-End & WordPress Developer</h1>
+
+  <main>
+    <div id="viewport" class="viewport">
+    <div id="stage" class="stage">
+      <canvas id="room" role="img" aria-label="A pixel-art room: Mark codes at his desk under a teal MARK neon sign while his dog Mochi naps nearby. Use the buttons below to open About, Skills, Projects and Contact."></canvas>
+      <div id="tip" class="tip" hidden></div>
+      <div id="bubble" class="bubble" hidden></div>
+    </div>
+    </div>
+    <p id="pan-hint" class="pan-hint" hidden>← swipe to look around →</p>
+
+    <div class="hud">
+      <nav class="hotbar" aria-label="Sections">
+        <button class="slot" data-open="about"><svg viewBox="0 0 8 8" aria-hidden="true"><rect x="2" y="0" width="4" height="4" fill="#c98a5e"/><rect x="2" y="0" width="4" height="1" fill="#15121c"/><rect x="1" y="5" width="6" height="3" fill="#2bbecb"/></svg><span>About</span><kbd>1</kbd></button>
+        <button class="slot" data-open="skills"><svg viewBox="0 0 8 8" aria-hidden="true"><rect x="0" y="1" width="2" height="7" fill="#e05a5a"/><rect x="2" y="0" width="2" height="8" fill="#f6d365"/><rect x="4" y="2" width="2" height="6" fill="#2bbecb"/><rect x="6" y="1" width="2" height="7" fill="#8a7bd8"/></svg><span>Skills</span><kbd>2</kbd></button>
+        <button class="slot" data-open="projects"><svg viewBox="0 0 8 8" aria-hidden="true"><rect x="0" y="0" width="8" height="8" fill="#5e3b28"/><rect x="1" y="1" width="6" height="6" fill="#f4f6fb"/><rect x="1" y="1" width="6" height="2" fill="#4fb3c9"/><rect x="2" y="4" width="3" height="1" fill="#2b3245"/></svg><span>Projects</span><kbd>3</kbd></button>
+        <button class="slot" data-open="contact"><svg viewBox="0 0 8 8" aria-hidden="true"><rect x="0" y="1" width="8" height="2" fill="#17707a"/><rect x="1" y="3" width="6" height="5" fill="#2bbecb"/><rect x="3" y="4" width="2" height="2" fill="#e9edf5"/></svg><span>Contact</span><kbd>4</kbd></button>
+      </nav>
+      <p id="status" class="status" aria-live="off"></p>
+    </div>
+  </main>
+
+  <dialog id="panel" class="panel" aria-labelledby="panel-title">
+    <div class="panel-bar">
+      <h2 id="panel-title"></h2>
+      <button id="panel-close" class="close" aria-label="Close">✕</button>
+    </div>
+    <div id="panel-body" class="panel-body"></div>
+  </dialog>
+
+  <noscript><p class="noscript">This room needs JavaScript. Reach Mark at <a href="mailto:devmarkchristofher@gmail.com">devmarkchristofher@gmail.com</a>.</p></noscript>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
