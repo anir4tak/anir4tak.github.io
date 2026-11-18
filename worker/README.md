@@ -1,32 +1,28 @@
-# Now playing on the jukebox
+# Now playing on the music box
 
-The room can show what Topz is listening to on Spotify right now. Spotify only shares that with an app logged in as you, and that login can't go in the public site, so a tiny free Cloudflare Worker holds it. Until it's set up, the room simply says *"Topz is not listening to anything right now."*
+The room can show what Topz is listening to on Spotify right now. Spotify only shares that with an app logged in as you, and that login can't go in the public site, so a tiny free Cloudflare Worker holds it. Until it's set up, the room says *"Topz is not listening to anything right now."*
 
-Setup takes about 10 minutes.
+No terminal needed. About 10 minutes, all in the browser.
 
-## 1. Create a Spotify app
+## 1. Deploy the worker (Cloudflare)
 
-1. Go to <https://developer.spotify.com/dashboard> and log in.
-2. **Create app**. Any name and description. Set the **Redirect URI** to `http://127.0.0.1:8888/callback`. Tick **Web API**. Save.
-3. Open the app's **Settings** and copy the **Client ID** and **Client secret**.
+1. <https://dash.cloudflare.com> → **Compute → Workers & Pages → Create → Start with Hello World** (or **Create Worker**). Name it `topz-now-playing`, **Deploy**.
+2. **Edit code**, replace everything with the contents of [`now-playing.js`](https://raw.githubusercontent.com/anir4tak/anir4tak.github.io/master/worker/now-playing.js), **Deploy**.
+3. Note the worker's URL, like `https://topz-now-playing.yourname.workers.dev`.
 
-## 2. Get your refresh token
+## 2. Create a Spotify app
 
-On your computer (Node 18 or newer), from this repo:
+1. <https://developer.spotify.com/dashboard> → **Create app**. Any name and description.
+2. **Redirect URI**: your worker URL plus `/callback`, e.g. `https://topz-now-playing.yourname.workers.dev/callback`. Click **Add**.
+3. Tick **Web API**, agree to the terms, **Save**.
+4. Open **Settings**, copy the **Client ID**, click **View client secret** and copy it.
 
-```
-SPOTIFY_CLIENT_ID=your_id SPOTIFY_CLIENT_SECRET=your_secret node worker/get-refresh-token.mjs
-```
+## 3. Add the secrets and connect
 
-Open the link it prints, approve, and copy the refresh token from the terminal.
-
-## 3. Deploy the worker
-
-1. Sign up at <https://dash.cloudflare.com> (free plan is fine).
-2. **Workers & Pages → Create → Create Worker**, name it `topz-now-playing`, **Deploy**.
-3. **Edit code**, replace everything with the contents of `worker/now-playing.js`, **Deploy**.
-4. **Settings → Variables and Secrets**, add three **Secrets**: `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REFRESH_TOKEN`.
-5. Open the worker's URL (like `https://topz-now-playing.yourname.workers.dev`). With music playing it shows `{"isPlaying":true,...}`.
+1. In the worker: **Settings → Variables and Secrets → Add**. Type **Secret**. Add `SPOTIFY_CLIENT_ID` and `SPOTIFY_CLIENT_SECRET`. **Deploy**.
+2. Open `https://<your worker>/setup`, approve on Spotify. The page shows a token.
+3. Add it as a third **Secret**, `SPOTIFY_REFRESH_TOKEN`, and **Deploy**. Setup switches itself off.
+4. Open the worker URL. With music playing it shows `{"isPlaying":true,...}`.
 
 ## 4. Point the site at it
 
@@ -36,4 +32,6 @@ In `site/js/content.js` set:
 export const NOW_PLAYING_URL = 'https://topz-now-playing.yourname.workers.dev';
 ```
 
-Commit and push. The jukebox now shows your track, the room dances while you listen, and the status strip says what's playing.
+Commit and push. The music box now shows your track, the room dances while you listen, and the status strip says what's playing.
+
+(`get-refresh-token.mjs` is the older terminal way to get the token; you don't need it.)
