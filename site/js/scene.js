@@ -191,7 +191,7 @@ export function createScene(canvas, hooks = {}) {
     { id: 'dog', label: 'Mochi', x: 0, y: 0, w: 18, h: 14 },
     { id: 'aircon', label: 'Aircon · on/off', x: 132, y: 2, w: 60, h: 18 },
     { id: 'bulb', label: 'Light bulb · on/off', x: 87, y: 0, w: 14, h: 24 },
-    { id: 'chest', label: 'Treasure chest · open me', x: 14, y: 138, w: 30, h: 30 },
+    { id: 'chest', label: 'Treasure chest · open me', x: 14, y: 122, w: 30, h: 30 },
     { id: 'hat', label: 'Straw hat', x: 127, y: 118, w: 26, h: 12 },
     { id: 'roach', label: '?', x: -99, y: 0, w: 14, h: 11 },
     { id: 'mouse', label: '?', x: -99, y: 0, w: 12, h: 9 },
@@ -466,10 +466,10 @@ export function createScene(canvas, hooks = {}) {
 
   // Mochi's bed (back half; the front lip is drawn after the dog)
   function drawBedBack() {
-    R(64, 150, 34, 4, '#8d93a3'); R(66, 152, 30, 6, '#b7bdc9'); R(70, 154, 22, 3, '#dfe3ea');
+    R(64, 138, 34, 4, '#8d93a3'); R(66, 140, 30, 6, '#b7bdc9'); R(70, 142, 22, 3, '#dfe3ea');
   }
   function drawBedFront() {
-    R(62, 157, 38, 5, '#8d93a3'); R(62, 157, 38, 1, '#eef1f6'); R(64, 162, 34, 1, '#4a5068');
+    R(62, 145, 38, 5, '#8d93a3'); R(62, 145, 38, 1, '#eef1f6'); R(64, 150, 34, 1, '#4a5068');
   }
 
   function drawMonitors(dl) {
@@ -1379,8 +1379,8 @@ export function createScene(canvas, hooks = {}) {
     c.target = 1;
     c.itemAt = s.t + 0.35;
     c.closeAt = s.t + 5;
-    for (let k = 0; k < 14; k++) c.sparks.push({ x: 29 + rand(-8, 8), y: 150, vx: rand(-14, 14), vy: rand(-30, -12), life: rand(0.6, 1.2) });
-    setTimeout(() => hooks.say?.(c.item.say, 29, 126), 380);
+    for (let k = 0; k < 14; k++) c.sparks.push({ x: 29 + rand(-8, 8), y: 134, vx: rand(-14, 14), vy: rand(-30, -12), life: rand(0.6, 1.2) });
+    setTimeout(() => hooks.say?.(c.item.say, 29, 110), 380);
     if (c.item.photo) setTimeout(() => hooks.photo?.(c.item), 1300);
     if (c.item.name === 'bone') { const g = s.dog; g.state = 'walk'; g.target = 46; }
   }
@@ -1389,7 +1389,7 @@ export function createScene(canvas, hooks = {}) {
     const c = s.chest;
     if (c.target === 1 && s.t > c.closeAt) c.target = 0;
     c.open += (c.target - c.open) * Math.min(1, dt * 10);
-    const x = 16, y = 152;
+    const x = 16, y = 136;
     const open = c.open > 0.5;
     // rose-painted wood, silver bands with rivets, gold studs, heaped with coins
     const wood = '#a5636a', woodL = '#bb7a7f', woodD = '#7f474d', band = '#a9afbd', bandL = '#d4d8e0', rivet = '#6b7183';
@@ -1440,11 +1440,11 @@ export function createScene(canvas, hooks = {}) {
       p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 30 * dt;
       R(p.x, p.y, 1, 1, p.life > 0.4 ? '#fff3b0' : '#f2c14e');
     }
-    box('chest').y = open ? 136 : 138;
+    box('chest').y = open ? 120 : 122;
   }
   function drawDog() {
     const g = s.dog;
-    const y = 148;
+    const y = 136;
     let rows;
     if (g.state === 'sleep') rows = DOG_SLEEP;
     else if (g.state === 'walk') rows = DOG_WALK[Math.floor(s.t * 6) % 2];

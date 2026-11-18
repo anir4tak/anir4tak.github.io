@@ -65,6 +65,8 @@ async function nowPlaying(env) {
     album: isEpisode ? item.show?.name : item.album?.name,
     url: item.external_urls?.spotify,
     image: (isEpisode ? item.images : item.album?.images)?.at(-2)?.url ?? null,
+    progressMs: data.progress_ms ?? null,
+    durationMs: item.duration_ms ?? null,
   };
 }
 

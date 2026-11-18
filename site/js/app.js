@@ -288,27 +288,54 @@ async function loadWeather() {
 }
 
 // ---------- what Topz is listening to right now ----------
-let nowPlaying = null; // { title, artist, url, image } while something plays
+let nowPlaying = null; // { title, artist, url, image, progressMs, durationMs } while something plays
 async function loadNowPlaying() {
   if (!NOW_PLAYING_URL) { nowPlaying = null; renderNowPlaying(); return; }
   try {
     const r = await (await fetch(NOW_PLAYING_URL, { cache: 'no-store' })).json();
-    nowPlaying = r && r.isPlaying ? r : null;
+    nowPlaying = r && r.isPlaying ? { ...r, at: performance.now() } : null;
   } catch { nowPlaying = null; }
   _setMusic(musicOn || !!nowPlaying);
   renderNowPlaying();
   tick();
 }
-function renderNowPlaying() {
-  const el = document.getElementById('now-playing');
-  if (!el) return;
-  el.innerHTML = nowPlaying
-    ? `<a href="${nowPlaying.url}" target="_blank" rel="noopener noreferrer">
-         ${nowPlaying.image ? `<img src="${nowPlaying.image}" alt="">` : ''}
-         <span><small>Topz is listening to</small><b>${esc(nowPlaying.title)}</b><em>${esc(nowPlaying.artist)}</em></span>
-         <i class="eq" aria-hidden="true"><s></s><s></s><s></s></i></a>`
-    : `<p><span class="dot"></span>Topz is not listening to anything right now. Pick a playlist below.</p>`;
+// the same little card in the room's corner and at the top of the music box
+const npCard = document.getElementById('np-card');
+let npKey = '';
+function npInner(n) {
+  return `${n.image ? `<img src="${n.image}" alt="">` : '<span class="np-noart"></span>'}
+    <span class="np-text">
+      <i class="np-eq" aria-hidden="true"><s></s><s></s><s></s><s></s></i>
+      <b>${esc(n.title)}</b><em>${esc(n.artist)}</em>
+    </span>
+    <span class="np-bar" aria-hidden="true"><span></span></span>`;
 }
+function renderNowPlaying() {
+  const n = nowPlaying;
+  const key = n ? `${n.url}|${n.title}` : '';
+  if (key !== npKey) { // rebuild only when the song changes, so the bar moves smoothly
+    npKey = key;
+    npCard.hidden = !n;
+    if (n) { npCard.href = n.url; npCard.title = `Topz is listening to ${n.title} by ${n.artist}`; npCard.innerHTML = npInner(n); }
+    const el = document.getElementById('now-playing');
+    if (el) el.innerHTML = n
+      ? `<small class="np-label">Topz is listening to</small><a class="np-card in-panel" href="${n.url}" target="_blank" rel="noopener noreferrer">${npInner(n)}</a>`
+      : `<p><span class="dot"></span>Topz is not listening to anything right now. Pick a record below.</p>`;
+  }
+  updateNpBar();
+}
+// progress fills between checks, from where Spotify said the song was
+function updateNpBar() {
+  const n = nowPlaying;
+  const bars = document.querySelectorAll('.np-bar');
+  bars.forEach((b) => { b.hidden = !(n && n.durationMs); });
+  if (!n || !n.durationMs) return;
+  const ms = Math.min(n.durationMs, (n.progressMs || 0) + (performance.now() - n.at));
+  const pct = (ms / n.durationMs * 100).toFixed(2) + '%';
+  bars.forEach((b) => { b.firstElementChild.style.width = pct; });
+  if (ms >= n.durationMs && performance.now() - n.at > 2000) { n.at = performance.now() + 1e9; loadNowPlaying(); } // song ended: ask again
+}
+setInterval(updateNpBar, 1000);
 
 function tick() {
   const t = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', timeZone: PROFILE.timezone }).format(new Date());
