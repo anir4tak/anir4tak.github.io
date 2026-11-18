@@ -65,6 +65,7 @@ export const SPOTIFY = {
     { name: 'Disney Mc Elle', id: '0AAERB2kPaW6ekaAU0JOiv' },
     { name: 'Anime Songs', id: '7JHlw8fOfnkwJw0L43VBGD' },
     { name: 'OPM', id: '4WP9I0rgR7sJdQQHOeWfNu' },
+    { name: 'Barefoot', id: '3LX5aTSCksKvK35N4kOz2I' },
   ],
 };
 
