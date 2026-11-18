@@ -173,7 +173,7 @@ let lastFocus = null;
 const jukebox = document.getElementById('jukebox');
 function openPanel(id) {
   const isJukebox = id === 'jukebox';
-  const p = isJukebox ? { title: 'Jukebox' } : PANELS[id]?.();
+  const p = isJukebox ? { title: 'Music box' } : PANELS[id]?.();
   if (!p) return;
   lastFocus = document.activeElement;
   panelTitle.textContent = p.title;
@@ -207,25 +207,44 @@ addEventListener('keydown', (e) => {
 
 // ---------- jukebox: Spotify's iFrame API, so the room can dance along ----------
 let controller = null, jukeboxReady = false, current = 0;
+const SLEEVES = ['#c0504d', '#d9822b', '#c9a227', '#4f9a5a', '#2a8f8a', '#4a6fb5', '#8a5fbf', '#c0508f', '#6b7183'];
 function setupJukebox() {
   if (jukeboxReady) return;
   jukeboxReady = true;
   document.getElementById('spotify-profile').href = SPOTIFY.profile;
-  const tabs = jukebox.querySelector('.tabs');
-  tabs.innerHTML = SPOTIFY.playlists.map((p, i) =>
-    `<button role="tab" aria-selected="${i === 0}" data-i="${i}">${esc(p.name)}</button>`).join('');
-  tabs.addEventListener('click', (e) => {
-    const b = e.target.closest('button');
+  // a crate of records: one sleeve per playlist, the record peeking out
+  const crate = jukebox.querySelector('.crate');
+  crate.innerHTML = SPOTIFY.playlists.map((p, i) => `
+    <div role="listitem">
+      <button class="record" data-i="${i}" aria-pressed="${i === 0}" style="--sleeve:${SLEEVES[i % SLEEVES.length]}">
+        <span class="disc" aria-hidden="true"><span class="vinyl"><span class="label"></span></span></span>
+        <span class="sleeve" aria-hidden="true"><span class="art"></span></span>
+        <span class="rname">${esc(p.name)}</span>
+      </button>
+    </div>`).join('');
+  // the playlist covers, straight from Spotify (no key needed)
+  SPOTIFY.playlists.forEach(async (p, i) => {
+    try {
+      const r = await fetch(`https://open.spotify.com/oembed?url=https://open.spotify.com/playlist/${p.id}`);
+      const { thumbnail_url: img } = await r.json();
+      if (!img) return;
+      const b = crate.querySelector(`[data-i="${i}"]`);
+      b.querySelector('.art').style.backgroundImage = `url("${img}")`;
+      b.querySelector('.label').style.backgroundImage = `url("${img}")`;
+    } catch { /* offline: plain coloured sleeves are fine */ }
+  });
+  crate.addEventListener('click', (e) => {
+    const b = e.target.closest('.record');
     if (!b) return;
     current = +b.dataset.i;
-    tabs.querySelectorAll('button').forEach((t) => t.setAttribute('aria-selected', t === b));
+    crate.querySelectorAll('.record').forEach((r) => r.setAttribute('aria-pressed', r === b));
     const uri = `spotify:playlist:${SPOTIFY.playlists[current].id}`;
-    if (controller) controller.loadUri(uri);
+    if (controller) { controller.loadUri(uri); controller.play?.(); }
     else fallbackEmbed();
   });
   window.onSpotifyIframeApiReady = (api) => {
     const el = document.getElementById('spotify-embed');
-    api.createController(el, { uri: `spotify:playlist:${SPOTIFY.playlists[0].id}`, width: '100%', height: 352 }, (c) => {
+    api.createController(el, { uri: `spotify:playlist:${SPOTIFY.playlists[0].id}`, width: '100%', height: 152 }, (c) => {
       controller = c;
       c.addListener('playback_update', (e) => scene.setMusic(!e.data.isPaused));
     });
@@ -241,14 +260,14 @@ function fallbackEmbed() {
   controller = null;
   const host = jukebox.querySelector('.player');
   host.innerHTML = `<iframe title="Spotify playlist" src="https://open.spotify.com/embed/playlist/${SPOTIFY.playlists[current].id}?theme=0"
-    width="100%" height="352" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
+    width="100%" height="152" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
 }
 
 // ---------- status strip: Mark's own time in Iloilo ----------
 let si = 0;
 let musicOn = false;
 const _setMusic = scene.setMusic;
-scene.setMusic = (on) => { musicOn = on; _setMusic(on); tick(); };
+scene.setMusic = (on) => { musicOn = on; _setMusic(on); jukebox.classList.toggle('spinning', on); tick(); };
 
 // ---------- real weather in the window ----------
 let weather = 'clear';
@@ -297,7 +316,7 @@ function tick() {
   // rotate through what's going on in the room
   const lines = [];
   if (nowPlaying) lines.push(`♪ Topz is listening to “${nowPlaying.title}” by ${nowPlaying.artist}`);
-  else if (musicOn) lines.push(`♪ Jukebox is playing “${SPOTIFY.playlists[current].name}”`);
+  else if (musicOn) lines.push(`♪ The music box is playing “${SPOTIFY.playlists[current].name}”`);
   else lines.push('Topz is not listening to anything right now');
   if (WEATHER_TEXT[weather]) lines.push(WEATHER_TEXT[weather]);
   lines.push(h >= 2 && h < 8 ? 'Topz is probably asleep (the dog is not)' : STATUS[si % STATUS.length]);
