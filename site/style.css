@@ -341,15 +341,27 @@ main {
 .np-label { display: block; color: var(--teal-light); font-size: 16px; margin-bottom: 6px; }
 .np-card {
   --np: #5fe08a;
-  position: absolute; left: 1.6%; bottom: 2%; z-index: 2;
+  position: relative;
   display: flex; align-items: center; gap: 10px;
-  width: clamp(200px, 28%, 340px); padding: 8px 10px 11px;
+  width: 100%; padding: 8px 10px 11px;
   background: #11131ee6; color: var(--ink); text-decoration: none;
   box-shadow: 0 0 0 2px #2c3150, 0 8px 0 2px #05060d88;
   animation: np-in .3s steps(4);
 }
 .np-card[hidden] { display: none; }
-.np-card.in-panel { position: relative; left: auto; bottom: auto; width: 100%; animation: none; }
+.np-card.in-panel { animation: none; }
+.np-stack {
+  position: absolute; left: 1.6%; bottom: 2%; z-index: 2;
+  display: flex; flex-direction: column; gap: 8px;
+  width: clamp(200px, 28%, 340px);
+}
+.np-stack:not(:has(.np-card:not([hidden]))) { display: none; }
+/* the game card: purple instead of Spotify green */
+.np-card.game { --np: #b9a3ff; padding-bottom: 8px; }
+.game-tag { color: var(--np); font: 600 12px 'Pixelify Sans', monospace; letter-spacing: .04em; text-transform: uppercase; }
+.game-time { color: var(--muted); text-transform: none; letter-spacing: 0; }
+.game-pad { display: grid; place-items: center; }
+.game-pad::after { content: '🎮'; font-size: 24px; }
 .np-card:hover, .np-card:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--np), 0 8px 0 2px #05060d88; }
 .np-card img, .np-noart {
   width: clamp(40px, 17%, 56px); aspect-ratio: 1; flex: none; object-fit: cover;
@@ -372,7 +384,7 @@ main {
 .np-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: #2c3150; }
 .np-bar > span { display: block; height: 100%; width: 0; background: var(--np); transition: width 1s linear; }
 /* keep the card out of the way while a character is talking */
-.talk:not([hidden]) ~ .np-card, .np-card:has(~ .talk:not([hidden])) { display: none; }
+.talk:not([hidden]) ~ .np-stack, .np-stack:has(~ .talk:not([hidden])) { display: none; }
 @keyframes eq { 0% { height: 4px; } 50% { height: 18px; } 100% { height: 8px; } }
 @keyframes np-in { from { transform: translateY(10px); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .np-eq s { animation: none; height: 10px; } .np-card { animation: none; } .np-bar > span { transition: none; } }

@@ -74,6 +74,10 @@ export const SPOTIFY = {
 // (see worker/README.md). Leave it empty and the room says he isn't listening.
 export const NOW_PLAYING_URL = 'https://topz-now-playing.devmarkchristofher.workers.dev';
 
+// Topz's Discord user ID. Lanyard (lanyard.rest) shares the game Discord sees him
+// playing (League, Valorant, Steam games…). Empty string hides the game card.
+export const DISCORD_ID = '776705848835309579';
+
 // the window shows the real weather here (Open-Meteo, no key needed)
 export const WEATHER_AT = { name: 'Iloilo', lat: 10.72, lon: 122.56 };
 

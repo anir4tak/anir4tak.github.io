@@ -1,5 +1,5 @@
 import { createScene, drawPortrait, W, H } from './scene.js';
-import { PROFILE, ABOUT, PROJECTS, CONTACT, STATUS, SPOTIFY, NOW_PLAYING_URL, WEATHER_AT } from './content.js';
+import { PROFILE, ABOUT, PROJECTS, CONTACT, STATUS, SPOTIFY, NOW_PLAYING_URL, DISCORD_ID, WEATHER_AT } from './content.js';
 
 const stage = document.getElementById('stage');
 const canvas = document.getElementById('room');
@@ -337,11 +337,56 @@ function updateNpBar() {
 }
 setInterval(updateNpBar, 1000);
 
+// ---------- what Topz is playing, via Discord (Lanyard) ----------
+const gameCard = document.getElementById('game-card');
+let gaming = null, gameKey = '';
+function gameIcon(a) {
+  const img = a.assets?.large_image || a.assets?.small_image;
+  if (!img) return null;
+  if (img.startsWith('mp:')) return `https://media.discordapp.net/${img.slice(3)}`;
+  if (a.application_id) return `https://cdn.discordapp.com/app-assets/${a.application_id}/${img}.png`;
+  return null;
+}
+async function loadGame() {
+  if (!DISCORD_ID) return;
+  try {
+    const { data } = await (await fetch(`https://api.lanyard.rest/v1/users/${DISCORD_ID}`, { cache: 'no-store' })).json();
+    const a = (data?.activities || []).find((x) => x.type === 0); // 0 = "Playing"
+    gaming = a ? { name: a.name, details: a.details, state: a.state, start: a.timestamps?.start, icon: gameIcon(a) } : null;
+  } catch { gaming = null; }
+  renderGame();
+  tick();
+}
+function since(ms) {
+  const m = Math.max(0, Math.floor((Date.now() - ms) / 60000));
+  return m < 1 ? 'just started' : m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${m % 60} min`;
+}
+function renderGame() {
+  const g = gaming;
+  const key = g ? `${g.name}|${g.details}|${g.state}|${g.icon}` : '';
+  gameCard.hidden = !g;
+  if (!g) { gameKey = ''; return; }
+  if (key !== gameKey) {
+    gameKey = key;
+    const sub = [g.details, g.state].filter(Boolean).join(' · ');
+    gameCard.innerHTML = `${g.icon ? `<img src="${g.icon}" alt="">` : '<span class="np-noart game-pad"></span>'}
+      <span class="np-text">
+        <small class="game-tag">🎮 Playing<span class="game-time"></span></small>
+        <b>${esc(g.name)}</b><em>${esc(sub || 'In game')}</em>
+      </span>`;
+  }
+  gameCard.querySelector('.game-time').textContent = g.start ? ` · ${since(g.start)}` : '';
+}
+loadGame();
+setInterval(loadGame, 30_000);
+setInterval(() => { if (gaming) renderGame(); }, 30_000);
+
 function tick() {
   const t = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', timeZone: PROFILE.timezone }).format(new Date());
   const h = +new Intl.DateTimeFormat('en-US', { hour: 'numeric', hourCycle: 'h23', timeZone: PROFILE.timezone }).format(new Date());
   // rotate through what's going on in the room
   const lines = [];
+  if (gaming) lines.push(`🎮 Topz is playing ${gaming.name}`);
   if (nowPlaying) lines.push(`♪ Topz is listening to “${nowPlaying.title}” by ${nowPlaying.artist}`);
   else if (musicOn) lines.push(`♪ The music box is playing “${SPOTIFY.playlists[current].name}”`);
   else lines.push('Topz is not listening to anything right now');

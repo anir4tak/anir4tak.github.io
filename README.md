@@ -10,6 +10,7 @@
 | PC tower | Cycles the RGB lighting |
 | Either window | Opens and closes the curtains. Shows Iloilo's time of day and its real weather (rain, storms, clouds, fog). |
 | Light bulb | Switches the ceiling light on/off — the room warms up and brightens, most noticeably at night |
+| Game card | While Topz plays something Discord can see (League, Valorant, Steam games…), a purple card in the corner shows the game and how long he's been playing, via Lanyard (`DISCORD_ID` in `site/js/content.js`) |
 | Topz | Says something. His chair rolls about on its own |
 | Mochi | Wakes up, or says hi |
 | Music box | A music box on a little walnut stand. Shows what Topz is listening to right now (see `worker/README.md`), and plays his playlists. While music plays, the lid lifts, the cylinder turns, notes float up, and Topz nods along and taps his foot. Opening it shows a crate of records, one per playlist with its cover on the sleeve and label; hovering slides a record out and spins it, clicking plays it. |
